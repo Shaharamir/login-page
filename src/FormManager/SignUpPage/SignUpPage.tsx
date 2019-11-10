@@ -7,6 +7,7 @@ import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider, KeyboardDatePicker, MaterialUiPickersDate } from '@material-ui/pickers';
 import useForm from 'react-hook-form';
 import ReCAPTCHA from "react-google-recaptcha";
+import { timeout } from 'q';
 
 interface IProps {
   switchForms: () => void;
@@ -80,7 +81,9 @@ const errorMessage = css`
 
   const onSubmit = (data: any) => {
     setFormDate(data);
-    console.log(data);
+    if(isRecaptchaValid) {
+      console.log(data);
+    }
   };
 
   const recaptchaChanged = (token: string | null) => {
@@ -95,8 +98,8 @@ const errorMessage = css`
   }
 
   const onInputBlur = () => {
-    setInputMessage(null);
     setAnchorEl(null);
+    setInputMessage(null);
   }
 
   return (
@@ -113,20 +116,16 @@ const errorMessage = css`
           enabled: true,
           boundariesElement: 'undefined',
         },
-        arrow: {
-          enabled: true,
-          element: anchorEl,
-        },
       }}
       transition
       css={css`padding: 1em 0; z-index: 1; max-width: 18em;`}
     >
       {({ TransitionProps }) => (
-          <Fade {...TransitionProps} timeout={350}>
-            <Paper>
-              <Typography css={css`padding: 1em;`} variant="body1">{inputMessage}</Typography>
-            </Paper>
-          </Fade>
+            <Fade {...TransitionProps} timeout={350}>
+                <Paper>
+                  <Typography css={css`padding: 1em;`} variant="body1">{inputMessage}</Typography>
+                </Paper>
+            </Fade>
         )}
     </Popper>
     <Paper css={container}>
