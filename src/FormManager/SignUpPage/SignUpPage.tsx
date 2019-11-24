@@ -1,16 +1,29 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
 import React, { useState, useRef } from 'react';
-import { Paper, Typography, TextField, Button, Fade, Chip, Popper } from '@material-ui/core';
+import { Paper, Typography, TextField, Button, Fade, Chip, Popper, CircularProgress } from '@material-ui/core';
 import 'date-fns';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider, KeyboardDatePicker, MaterialUiPickersDate } from '@material-ui/pickers';
 import useForm from 'react-hook-form';
 import ReCAPTCHA from "react-google-recaptcha";
-import { timeout } from 'q';
+import axios from 'axios';
+import { useSnackbar } from 'notistack';
+import _ from 'lodash';
+
 
 interface IProps {
   switchForms: () => void;
+}
+
+interface IUser {
+  firstname: string;
+  lastname: string;
+  username: string;
+  dateOfBirth: Date;
+  email: string;
+  password: string;
+  confirmPassword?: string;
 }
 
 const SignUpPage: React.FC<IProps> = (props) => {
@@ -18,13 +31,17 @@ const SignUpPage: React.FC<IProps> = (props) => {
   const { switchForms } = props;
   const recaptchaRef = useRef(null);
   const { register, handleSubmit, errors, watch } = useForm();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   
   const [selectedDate, setSelectedDate] = useState<MaterialUiPickersDate>(new Date());
-  const [formData, setFormDate] = useState();
+  const [formData, setFormDate] = useState<IUser | null>();
   const [isRecaptchaValid, setIsRecaptchaValid] = useState(false);
   const [anchorEl, setAnchorEl] = useState<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const [inputMessage, setInputMessage] = useState<String | null>(null);
-  
+  const [isSignupLoading, setIsSignupLoading] = useState(false);
+  const formRef: HTMLFormElement | null = null;
+  const [ isUsernameExist, setIsUsernameExist ] = useState(false);
+  const [ isEmailExist, setIsEmailExist ] = useState(false);
 
   const container = css`
   /* position: absolute;
@@ -74,17 +91,44 @@ const errorMessage = css`
         setSelectedDate(date);
       }
       else {
-        alert('Are you a time traveler?')
+        enqueueSnackbar('Are you a time traveler?', {variant: 'info', })
       }
     }
   }
 
-  const onSubmit = (data: any) => {
-    setFormDate(data);
+  const onSubmit = (data: IUser) => {
     if(isRecaptchaValid) {
-      console.log(data);
+      setIsSignupLoading(true);
+      delete data.confirmPassword
+      const usernamePassword = data.password;
+      delete data.password;
+      const dataToLowerCase: IUser = _.mapValues(data, _.method('toLowerCase'));
+      dataToLowerCase.password = usernamePassword;
+      setFormDate(dataToLowerCase);
+      axios.put('http://localhost:8080/user/', dataToLowerCase)
+      .then((res) => {
+        enqueueSnackbar(res.data, {variant: 'info'})
+        setIsSignupLoading(false);
+        switchForms();
+      }).catch((error) => {
+        setIsSignupLoading(false);
+      })
+    }
+    else {
+      enqueueSnackbar("Please validate you're not a robot", {variant: 'error'})
     }
   };
+
+  const checkIfExist = (username: string, setTo: (value: React.SetStateAction<boolean>) => void, restName: string) => {
+    if(!username) return false;
+    return axios.get('http://localhost:8080/user/' + restName + '/'+username.toLowerCase()).then((res) => {
+      setTo(true)
+      return false;
+    }).catch((e) => {
+      setTo(false)
+      return true;
+    })
+  }
 
   const recaptchaChanged = (token: string | null) => {
     if(token) {
@@ -133,11 +177,13 @@ const errorMessage = css`
         <Typography css={header} variant="h4">Sign Up</Typography>
         <Chip label="Already have a user? Log In" onClick={switchForms} clickable variant="outlined" />
       </div>
-      <form css={textFieldsContainer} onSubmit={handleSubmit(onSubmit)}>
+      <form css={textFieldsContainer} onSubmit={handleSubmit(onSubmit as any)} id="signup-form">
         {/* FIRST NAME */}
         <div css={formInputsContainer}>
           <Fade in={errors.firstname && errors.firstname.message ? true : false} timeout={500}>
-            <Typography css={errorMessage} variant="subtitle2">{errors.firstname && errors.firstname.message}</Typography>
+            <React.Fragment>
+              <Typography css={errorMessage} variant="subtitle2">{errors.firstname && errors.firstname.message}</Typography>
+            </React.Fragment>
           </Fade>
           <TextField css={formInputs}
             variant="outlined"
@@ -172,9 +218,10 @@ const errorMessage = css`
         </div>
         {/* USERNAME */}
         <div css={formInputsContainer}>
-          <Fade in={errors.username && errors.username.message ? true : false} timeout={500}>
-            <Typography css={errorMessage} variant="subtitle2">{errors.username && errors.username.message}</Typography>
+          <Fade in={errors.username && errors.username.message || isUsernameExist ? true : false} timeout={500}>
+            <Typography css={errorMessage} variant="subtitle2">{errors.username && errors.username.message ? errors.username.message : isUsernameExist && '* Username already taken'}</Typography>
           </Fade>
+          {console.log(errors.username)}
           <TextField css={formInputs}
             variant="outlined"
             label="Username *"
@@ -182,15 +229,17 @@ const errorMessage = css`
             name="username"
             inputRef={register({
               required: true,
-              pattern: { value: /^[a-zA-Z0-9_.-]{3,15}$/, message: '* Username is not valid'}
+              validate: {
+                value: (value) => checkIfExist(value, setIsUsernameExist, 'checkIfUsernameExist')
+              },
+              pattern: { value: /^[a-zA-Z0-9_.-]{3,15}$/, message: '* Username is not valid'},
             })}
-            onFocus={onInputFocus('Username minimum is 3 letters up to 15 and can only contain the letters A-Z and ("_", ".", "-"))')} 
+            onFocus={onInputFocus('Username minimum is 3 letters up to 15 and can only contain the letters A-Z, Numbers 0-9 and  ("_", ".", "-"))')} 
             onBlur={onInputBlur}
           />
         </div>
         {/* DATE OF BIRTH */}
         <div css={formInputsContainer}>
-          <Fade in={false}><Typography css={errorMessage} variant="subtitle2"></Typography></Fade>
           <MuiPickersUtilsProvider utils={DateFnsUtils}>
             <KeyboardDatePicker
               css={formInputs}
@@ -209,8 +258,8 @@ const errorMessage = css`
         </div>
         {/* EMAIL */}
         <div css={formInputsContainer}>
-          <Fade in={errors.email && errors.email.message ? true : false} timeout={500}>
-            <Typography css={errorMessage} variant="subtitle2">{errors.email && errors.email.message}</Typography>
+          <Fade in={errors.email && errors.email.message || isEmailExist ? true : false} timeout={500}>
+            <Typography css={errorMessage} variant="subtitle2">{errors.email && errors.email.message ? errors.email.message : isEmailExist && '* Email already exist'}</Typography>
           </Fade>
           <TextField css={formInputs}
             variant="outlined"
@@ -222,7 +271,10 @@ const errorMessage = css`
               pattern: {
                 value: /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/,
                 message: '* Email Adress is not valid'
-              }
+              },
+              validate: {
+                value: (value) => checkIfExist(value, setIsEmailExist, 'checkIfEmailExist')
+              },
             })}
           />
         </div>
@@ -250,7 +302,6 @@ const errorMessage = css`
         </div>
         {/* CONFIRM PASSWORD */}
         <div css={formInputsContainer}>
-          <Fade in={false}><Typography css={errorMessage} variant="subtitle2"></Typography></Fade>
           <TextField css={formInputs} 
             type="password"
             variant="outlined"
@@ -273,7 +324,7 @@ const errorMessage = css`
           sitekey="6LcPz8EUAAAAAMCOfT7FDeTufYqSALiBtskgWKXi"
           onChange={recaptchaChanged}
         />
-        <Button css={formInputs} type="submit" variant="outlined" color="primary">SIGN ME UP PLEASE!</Button>
+        <Button css={formInputs} type="submit" variant="outlined" color="primary" disabled={isSignupLoading} >{isSignupLoading ? <CircularProgress /> : 'SIGN ME UP PLEASE!'}</Button>
       </form>
     </Paper>
     </React.Fragment>

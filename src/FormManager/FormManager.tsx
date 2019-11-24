@@ -3,8 +3,12 @@ import { css, jsx } from '@emotion/core';
 import React, { useState, useEffect } from 'react';
 import LoginPage from './LoginPage/LoginPage';
 import SignUpPage from './SignUpPage/SignUpPage';
+import { SnackbarProvider } from 'notistack';
+import { IUser } from '../App';
 
 interface IProps {
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setUser: React.Dispatch<React.SetStateAction<IUser | null>>;
 
 }
 
@@ -15,7 +19,8 @@ enum formPages {
 
 const FormManager: React.FC<IProps> = (props) => {
 
-  const [selectedFormPage, setSelectedFormPage] = useState<formPages>(formPages.signup)
+  const { setIsLoading, setUser } = props;
+  const [selectedFormPage, setSelectedFormPage] = useState<formPages>(formPages.login)
 
   const page = css`
     display: flex;
@@ -27,7 +32,7 @@ const FormManager: React.FC<IProps> = (props) => {
   const updatePage = (selectedFormPage: formPages) => {
     switch(selectedFormPage) {
       case formPages.login:
-        return <LoginPage switchForms={switchForms}/>
+        return <LoginPage switchForms={switchForms} setIsLoading={setIsLoading} setUser={setUser}/>
       case formPages.signup:
         return <SignUpPage switchForms={switchForms}/>
     }
@@ -48,7 +53,15 @@ const FormManager: React.FC<IProps> = (props) => {
   return (
     <React.Fragment>
       <div css={page}>
-        {updatePage(selectedFormPage)}
+        <SnackbarProvider
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            autoHideDuration={3000}
+        >
+          {updatePage(selectedFormPage)}
+        </SnackbarProvider>
       </div>
     </React.Fragment>
   );

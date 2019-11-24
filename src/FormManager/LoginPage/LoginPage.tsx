@@ -3,24 +3,29 @@ import { css, jsx } from '@emotion/core';
 import React, { useState } from 'react';
 import { Paper, Typography, TextField, Button, Chip } from '@material-ui/core';
 import useForm from 'react-hook-form';
+import axios from 'axios';
+import { useSnackbar } from 'notistack';
+import { IUser, verifyUser } from '../../App';
+
 
 interface IProps {
   switchForms: () => void;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setUser: React.Dispatch<React.SetStateAction<IUser | null>>;
+}
+
+interface ILogin {
+  usernameOrEmail: string;
+  password: string;
 }
 
 const LoginPage: React.FC<IProps> = (props) => {
 
-  const { switchForms } = props;
+  const { switchForms, setIsLoading, setUser } = props;
   const { register, handleSubmit, errors } = useForm();
-
-  const [formData, setFormDate] = useState();
-
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   const container = css`
-    /* position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translate(-50%, 50%); */
     padding: 1em;
     width: 70%;
     min-width: 19em;
@@ -42,9 +47,21 @@ const LoginPage: React.FC<IProps> = (props) => {
     margin-top: 0.6em;
   `;
 
-  const onSubmit = (data: any) => {
-    setFormDate(data);
-    console.log(data);
+  const onSubmit = (data: ILogin) => {
+    axios.defaults.withCredentials = true;
+    axios.post('http://localhost:8080/user/login/', data)
+    .then((res) => {
+      enqueueSnackbar('User logged in succesfuly', {variant: 'success'});
+      verifyUser(setUser, setIsLoading);
+    }).catch((error) => {
+      if (!error.response) return;
+      if (error.response.status === 400) {
+        enqueueSnackbar("Wrong password", {variant: 'error'})
+      }
+      if(error.response.status === 404) {
+        enqueueSnackbar("Username or Email not found", {variant: 'error'})
+      }
+    })
   };
 
   return (
@@ -53,13 +70,13 @@ const LoginPage: React.FC<IProps> = (props) => {
         <Typography css={header} variant="h4">Login</Typography>
         <Chip label="Are you new? Sign Up!" onClick={switchForms} clickable variant="outlined" />
       </div>
-      <form css={textFieldsContainer} onSubmit={handleSubmit(onSubmit)}>
+      <form css={textFieldsContainer} onSubmit={handleSubmit(onSubmit as any)}>
         {/* USERNAME */}
         <TextField css={formInputs}
           variant="outlined"
           label="Username/Email *"
-          error={errors.username ? true : false}
-          name="username"
+          error={errors.usernameOrEmail ? true : false}
+          name="usernameOrEmail"
           inputRef={register({
             required: true,
             pattern: { value: /^[a-zA-Z0-9_.-]{3,15}$|[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/, message: '* Username is not valid' }
