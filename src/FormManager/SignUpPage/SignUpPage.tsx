@@ -1,7 +1,8 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
 import React, { useState, useRef } from 'react';
-import { Paper, Typography, TextField, Button, Fade, Chip, Popper, CircularProgress } from '@material-ui/core';
+import { Paper, Typography, TextField, Button, Fade, Chip, Popper, CircularProgress, InputAdornment, IconButton } from '@material-ui/core';
+import { VisibilityOffRounded as VisibilityOff ,VisibilityRounded as Visibility } from '@material-ui/icons/';
 import 'date-fns';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider, KeyboardDatePicker, MaterialUiPickersDate } from '@material-ui/pickers';
@@ -33,15 +34,17 @@ const SignUpPage: React.FC<IProps> = (props) => {
   const { register, handleSubmit, errors, watch } = useForm();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   
-  const [selectedDate, setSelectedDate] = useState<MaterialUiPickersDate>(new Date());
-  const [formData, setFormDate] = useState<IUser | null>();
-  const [isRecaptchaValid, setIsRecaptchaValid] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<HTMLInputElement | HTMLTextAreaElement | null>(null);
-  const [inputMessage, setInputMessage] = useState<String | null>(null);
-  const [isSignupLoading, setIsSignupLoading] = useState(false);
+  const [ selectedDate, setSelectedDate ] = useState<MaterialUiPickersDate>(new Date());
+  const [ formData, setFormDate ] = useState<IUser | null>();
+  const [ isRecaptchaValid, setIsRecaptchaValid ] = useState(false);
+  const [ anchorEl, setAnchorEl ] = useState<HTMLInputElement | HTMLTextAreaElement | null>(null);
+  const [ inputMessage, setInputMessage ] = useState<String | null>(null);
+  const [ isSignupLoading, setIsSignupLoading ] = useState(false);
   const formRef: HTMLFormElement | null = null;
   const [ isUsernameExist, setIsUsernameExist ] = useState(false);
   const [ isEmailExist, setIsEmailExist ] = useState(false);
+  const [ showPassword, setShowPassword ] = useState(false);
+  const [ showConfirmPassword, setShowConfirmPassword ] = useState(false);
 
   const container = css`
   /* position: absolute;
@@ -189,7 +192,8 @@ const errorMessage = css`
             variant="outlined"
             label="First Name *"
             error={errors.firstname ? true : false}
-            name="firstname" 
+            name="firstname"
+            placeholder="John"
             inputRef={register({
               required: true,
               pattern: { value: /^[a-zA-Z](\s?[a-zA-Z]){2,29}$/, message: '* First Name is not valid'}
@@ -208,6 +212,7 @@ const errorMessage = css`
             label="Last Name *"
             error={errors.lastname ? true : false}
             name="lastname"
+            placeholder="Doe"
             inputRef={register({
               required: true,
               pattern: { value: /^[a-zA-Z](\s?[a-zA-Z']){2,29}$/, message: '* Last Name is not valid'}
@@ -227,6 +232,7 @@ const errorMessage = css`
             label="Username *"
             error={errors.username ? true : false}
             name="username"
+            placeholder="JhonnyDoe_1"
             inputRef={register({
               required: true,
               validate: {
@@ -266,6 +272,7 @@ const errorMessage = css`
             label="Email *"
             error={errors.email ? true : false}
             name="email"
+            placeholder="example@gmail.com"
             inputRef={register({ 
               required: true,
               pattern: {
@@ -284,11 +291,12 @@ const errorMessage = css`
             <Typography css={errorMessage} variant="subtitle2">{errors.password && errors.password.message}</Typography>
           </Fade>
           <TextField css={formInputs}
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             variant="outlined"
             label="Password *"
             error={errors.password ? true : false}
             name="password"
+            placeholder="Monkey1212"
             inputRef={register({ 
               required: true,
               pattern: {
@@ -296,6 +304,19 @@ const errorMessage = css`
                 message: '* Password is not valid'
               }
             })}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={() => setShowPassword(!showPassword)}
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    {showPassword ? <Visibility /> : <VisibilityOff />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
             onFocus={onInputFocus('Password must be atleat the length of 8 and contain atleat one of each (Lowercase Uppercase and Number)')}
             onBlur={onInputBlur}
           />
@@ -303,17 +324,31 @@ const errorMessage = css`
         {/* CONFIRM PASSWORD */}
         <div css={formInputsContainer}>
           <TextField css={formInputs} 
-            type="password"
+            type={showConfirmPassword ? 'text' : 'password'}
             variant="outlined"
             label="Confirm Password *"
             error={errors.confirmPassword ? true : false}
             name="confirmPassword"
+            placeholder="Monkey1212"
             inputRef={register({ 
               required: true,
               validate: (value) => {
                 return value === watch('password');
               },
             })}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
             onFocus={onInputFocus('Passwords must match')}
             onBlur={onInputBlur}
           />
