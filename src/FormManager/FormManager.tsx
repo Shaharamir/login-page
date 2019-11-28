@@ -1,6 +1,6 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import LoginPage from './LoginPage/LoginPage';
 import SignUpPage from './SignUpPage/SignUpPage';
 import { SnackbarProvider } from 'notistack';
@@ -28,27 +28,26 @@ const FormManager: React.FC<IProps> = (props) => {
     align-items: center;
     margin: 1em 0;
   `;
-
-  const updatePage = (selectedFormPage: formPages) => {
-    switch(selectedFormPage) {
-      case formPages.login:
-        return <LoginPage switchForms={switchForms} setIsLoading={setIsLoading} setUser={setUser}/>
-      case formPages.signup:
-        return <SignUpPage switchForms={switchForms}/>
-    }
-  }
-
-  const switchForms = () => {
+  const switchForms = useCallback(() => {
     if(selectedFormPage === formPages.login) {
       setSelectedFormPage(formPages.signup)
     } else {
       setSelectedFormPage(formPages.login)
     }
-  }
+  }, [selectedFormPage])
 
-  useEffect(() => {  
-    updatePage(selectedFormPage)
-  }, [selectedFormPage, setSelectedFormPage])
+  const updatePage = useCallback(() => {
+      switch(selectedFormPage) {
+        case formPages.login:
+          return <LoginPage switchForms={switchForms} setIsLoading={setIsLoading} setUser={setUser}/>
+        case formPages.signup:
+          return <SignUpPage switchForms={switchForms}/>
+      }
+  }, [selectedFormPage, setIsLoading, setUser, switchForms])
+
+  useEffect(() => {
+    updatePage();
+  }, [selectedFormPage, setSelectedFormPage, updatePage])
 
   return (
     <React.Fragment>
@@ -60,7 +59,7 @@ const FormManager: React.FC<IProps> = (props) => {
             }}
             autoHideDuration={3000}
         >
-          {updatePage(selectedFormPage)}
+          {updatePage()}
         </SnackbarProvider>
       </div>
     </React.Fragment>

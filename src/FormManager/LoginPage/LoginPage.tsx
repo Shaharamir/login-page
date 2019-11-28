@@ -25,7 +25,7 @@ const LoginPage: React.FC<IProps> = (props) => {
 
   const { switchForms, setIsLoading, setUser } = props;
   const { register, handleSubmit, errors } = useForm();
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const { enqueueSnackbar } = useSnackbar();
   const [ isLoginLoading, setIsLoginLoading ] = useState(false);
   const [ showPassword, setShowPassword ] = useState(false);
 
@@ -34,6 +34,7 @@ const LoginPage: React.FC<IProps> = (props) => {
     padding: 1em;
     width: 70%;
     min-width: 19em;
+    max-width: 50em;
   `;
 
   const header = css`
@@ -85,6 +86,7 @@ const LoginPage: React.FC<IProps> = (props) => {
           label="Username/Email *"
           error={errors.usernameOrEmail ? true : false}
           name="usernameOrEmail"
+          placeholder="JhonnyDoe_1"
           inputRef={register({
             required: true,
             // pattern: { value: /^[a-zA-Z0-9_.-]{3,15}$|[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/, message: '* Username is not valid' }
@@ -104,6 +106,7 @@ const LoginPage: React.FC<IProps> = (props) => {
           label="Password *"
           error={errors.password ? true : false}
           name="password"
+          placeholder="Monkey1212"
           inputRef={register({
             required: true,
             // pattern: {

@@ -32,7 +32,7 @@ const SignUpPage: React.FC<IProps> = (props) => {
   const { switchForms } = props;
   const recaptchaRef = useRef(null);
   const { register, handleSubmit, errors, watch } = useForm();
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const { enqueueSnackbar } = useSnackbar();
   
   const [ selectedDate, setSelectedDate ] = useState<MaterialUiPickersDate>(new Date());
   const [ formData, setFormDate ] = useState<IUser | null>();
@@ -40,20 +40,16 @@ const SignUpPage: React.FC<IProps> = (props) => {
   const [ anchorEl, setAnchorEl ] = useState<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const [ inputMessage, setInputMessage ] = useState<String | null>(null);
   const [ isSignupLoading, setIsSignupLoading ] = useState(false);
-  const formRef: HTMLFormElement | null = null;
   const [ isUsernameExist, setIsUsernameExist ] = useState(false);
   const [ isEmailExist, setIsEmailExist ] = useState(false);
   const [ showPassword, setShowPassword ] = useState(false);
   const [ showConfirmPassword, setShowConfirmPassword ] = useState(false);
 
   const container = css`
-  /* position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translate(-50%, 50%); */
-  padding: 1em;
-  width: 70%;
-  min-width: 19em;
+    padding: 1em;
+    width: 70%;
+    min-width: 19em;
+    max-width: 50em;
 `;
 
   const header = css`
@@ -223,7 +219,7 @@ const errorMessage = css`
         </div>
         {/* USERNAME */}
         <div css={formInputsContainer}>
-          <Fade in={errors.username && errors.username.message || isUsernameExist ? true : false} timeout={500}>
+          <Fade in={(errors.username && (errors.username.message || isUsernameExist)) ? true : false} timeout={500}>
             <Typography css={errorMessage} variant="subtitle2">{errors.username && errors.username.message ? errors.username.message : isUsernameExist && '* Username already taken'}</Typography>
           </Fade>
           {console.log(errors.username)}
@@ -264,7 +260,7 @@ const errorMessage = css`
         </div>
         {/* EMAIL */}
         <div css={formInputsContainer}>
-          <Fade in={errors.email && errors.email.message || isEmailExist ? true : false} timeout={500}>
+          <Fade in={errors.email && (errors.email.message || isEmailExist) ? true : false} timeout={500}>
             <Typography css={errorMessage} variant="subtitle2">{errors.email && errors.email.message ? errors.email.message : isEmailExist && '* Email already exist'}</Typography>
           </Fade>
           <TextField css={formInputs}

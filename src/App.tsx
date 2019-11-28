@@ -7,7 +7,6 @@ import { CookiesProvider, useCookies } from 'react-cookie';
 import axios from 'axios';
 import { Button } from '@material-ui/core';
 import { SnackbarProvider } from 'notistack';
-import { toDate } from 'date-fns';
 
 const theme = createMuiTheme({
   palette: {
@@ -69,10 +68,10 @@ const App: React.FC = () => {
                 <div>Loading...</div>
                 : user ? 
                   <div>
-                    {Object.entries(user).map((detail) => {
+                    {Object.entries(user).map((detail, index: number) => {
                       return detail[0] === 'dateOfBirth' ? 
-                        <div>{detail[0]}: {new Date(detail[1]).toLocaleDateString()}</div>
-                      : <div>{detail[0]}: {detail[1]}</div>
+                        <div key={index}>{detail[0]}: {new Date(detail[1]).toLocaleDateString()}</div>
+                      : <div key={index}>{detail[0]}: {detail[1]}</div>
                     })}
                     <Button onClick={() => { removeCookie('userToken'); verifyUser(setUser, setIsLoading) }}>logout</Button>
                   </div>
