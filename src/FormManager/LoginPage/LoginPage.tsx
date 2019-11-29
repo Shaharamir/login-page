@@ -1,19 +1,19 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
 import React, { useState } from 'react';
-import { Paper, Typography, TextField, Button, Chip, CircularProgress, InputAdornment, IconButton } from '@material-ui/core';
+import { Typography, TextField, Button, Chip, CircularProgress, InputAdornment, IconButton } from '@material-ui/core';
 import { VisibilityOffRounded as VisibilityOff ,VisibilityRounded as Visibility, AccountCircle, VpnKey } from '@material-ui/icons/';
 import useForm from 'react-hook-form';
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
-import { IUser, verifyUser } from '../../App';
-
-
+import { verifyUser } from '../../App';
+import { Container }  from '../../shared';
+import { IDatabaseUser } from '../../types/types';
 
 interface IProps {
   switchForms: () => void;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  setUser: React.Dispatch<React.SetStateAction<IUser | null>>;
+  setUser: React.Dispatch<React.SetStateAction<IDatabaseUser | null>>;
 }
 
 interface ILogin {
@@ -28,14 +28,6 @@ const LoginPage: React.FC<IProps> = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   const [ isLoginLoading, setIsLoginLoading ] = useState(false);
   const [ showPassword, setShowPassword ] = useState(false);
-
-
-  const container = css`
-    padding: 1em;
-    width: 70%;
-    min-width: 19em;
-    max-width: 50em;
-  `;
 
   const header = css`
     display: flex;
@@ -74,7 +66,7 @@ const LoginPage: React.FC<IProps> = (props) => {
   };
 
   return (
-    <Paper css={container}>
+    <Container>
       <div>
         <Typography css={header} variant="h4">Login</Typography>
         <Chip label="Are you new? Sign Up!" onClick={switchForms} clickable variant="outlined" />
@@ -135,7 +127,7 @@ const LoginPage: React.FC<IProps> = (props) => {
         />
         <Button css={formInputs} type="submit" variant="outlined" color="primary" disabled={isLoginLoading} >{isLoginLoading ? <CircularProgress /> : 'Enter'}</Button>
       </form>
-    </Paper>
+    </Container>
   );
 }
 

@@ -1,14 +1,12 @@
-/** @jsx jsx */
-import { css, jsx } from '@emotion/core';
 import React, { useState, useEffect, useCallback } from 'react';
 import LoginPage from './LoginPage/LoginPage';
 import SignUpPage from './SignUpPage/SignUpPage';
 import { SnackbarProvider } from 'notistack';
-import { IUser } from '../App';
+import { IDatabaseUser } from '../types/types';
 
 interface IProps {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  setUser: React.Dispatch<React.SetStateAction<IUser | null>>;
+  setUser: React.Dispatch<React.SetStateAction<IDatabaseUser | null>>;
 
 }
 
@@ -22,12 +20,6 @@ const FormManager: React.FC<IProps> = (props) => {
   const { setIsLoading, setUser } = props;
   const [selectedFormPage, setSelectedFormPage] = useState<formPages>(formPages.login)
 
-  const page = css`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 1em 0;
-  `;
   const switchForms = useCallback(() => {
     if(selectedFormPage === formPages.login) {
       setSelectedFormPage(formPages.signup)
@@ -51,7 +43,6 @@ const FormManager: React.FC<IProps> = (props) => {
 
   return (
     <React.Fragment>
-      <div css={page}>
         <SnackbarProvider
             anchorOrigin={{
               vertical: 'bottom',
@@ -61,7 +52,6 @@ const FormManager: React.FC<IProps> = (props) => {
         >
           {updatePage()}
         </SnackbarProvider>
-      </div>
     </React.Fragment>
   );
 }

@@ -11,20 +11,11 @@ import ReCAPTCHA from "react-google-recaptcha";
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import _ from 'lodash';
-
+import { Container } from '../../shared';
+import { IFormUser } from '../../types/types';
 
 interface IProps {
   switchForms: () => void;
-}
-
-interface IUser {
-  firstname: string;
-  lastname: string;
-  username: string;
-  dateOfBirth: Date;
-  email: string;
-  password: string;
-  confirmPassword?: string;
 }
 
 const SignUpPage: React.FC<IProps> = (props) => {
@@ -35,7 +26,7 @@ const SignUpPage: React.FC<IProps> = (props) => {
   const { enqueueSnackbar } = useSnackbar();
   
   const [ selectedDate, setSelectedDate ] = useState<MaterialUiPickersDate>(new Date());
-  const [ formData, setFormDate ] = useState<IUser | null>();
+  const [ formData, setFormDate ] = useState<IFormUser | null>();
   const [ isRecaptchaValid, setIsRecaptchaValid ] = useState(false);
   const [ anchorEl, setAnchorEl ] = useState<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const [ inputMessage, setInputMessage ] = useState<String | null>(null);
@@ -44,13 +35,6 @@ const SignUpPage: React.FC<IProps> = (props) => {
   const [ isEmailExist, setIsEmailExist ] = useState(false);
   const [ showPassword, setShowPassword ] = useState(false);
   const [ showConfirmPassword, setShowConfirmPassword ] = useState(false);
-
-  const container = css`
-    padding: 1em;
-    width: 70%;
-    min-width: 19em;
-    max-width: 50em;
-`;
 
   const header = css`
   display: flex;
@@ -95,13 +79,13 @@ const errorMessage = css`
     }
   }
 
-  const onSubmit = (data: IUser) => {
+  const onSubmit = (data: IFormUser) => {
     if(isRecaptchaValid) {
       setIsSignupLoading(true);
       delete data.confirmPassword
       const usernamePassword = data.password;
       delete data.password;
-      const dataToLowerCase: IUser = _.mapValues(data, _.method('toLowerCase'));
+      const dataToLowerCase: IFormUser = _.mapValues(data, _.method('toLowerCase'));
       dataToLowerCase.password = usernamePassword;
       setFormDate(dataToLowerCase);
       axios.put('http://localhost:8080/user/', dataToLowerCase)
@@ -171,7 +155,7 @@ const errorMessage = css`
             </Fade>
         )}
     </Popper>
-    <Paper css={container}>
+    <Container>
       <div>
         <Typography css={header} variant="h4">Sign Up</Typography>
         <Chip label="Already have a user? Log In" onClick={switchForms} clickable variant="outlined" />
@@ -357,7 +341,7 @@ const errorMessage = css`
         />
         <Button css={formInputs} type="submit" variant="outlined" color="primary" disabled={isSignupLoading} >{isSignupLoading ? <CircularProgress /> : 'SIGN ME UP PLEASE!'}</Button>
       </form>
-    </Paper>
+    </Container>
     </React.Fragment>
   );
 }
