@@ -5,11 +5,11 @@ import GlobalCSS from './GlobalCSS';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import { CookiesProvider, useCookies } from 'react-cookie';
 import axios from 'axios';
-import { Button, Typography } from '@material-ui/core';
+import { Button } from '@material-ui/core';
 import { SnackbarProvider } from 'notistack';
-import { Container } from './shared';
 import EmailConfirmation from './EmailConfirmation/EmailConfirmation';
 import { IDatabaseUser } from './types/types';
+import socketIOClient from "socket.io-client";
 
 const theme = createMuiTheme({
   palette: {
@@ -28,6 +28,7 @@ export const verifyUser = (setUser: React.Dispatch<React.SetStateAction<IDatabas
   .then((res) => {
     setIsLoading(false);
     setUser(res.data as IDatabaseUser);
+    const socket = socketIOClient('localhost:8080', {query: `user=${JSON.stringify(res.data)}`});
   })
   .catch((error) => {
       setIsLoading(false);
@@ -42,7 +43,7 @@ const App: React.FC = () => {
   const [ cookies, setCookie, removeCookie ] = useCookies(['userToken']);
 
   useEffect(() => {
-    verifyUser(setUser, setIsLoading)
+    verifyUser(setUser, setIsLoading);
   }, [])
 
   return (
