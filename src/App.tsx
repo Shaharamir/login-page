@@ -22,13 +22,16 @@ const theme = createMuiTheme({
   },
 });
 
-export const verifyUser = (setUser: React.Dispatch<React.SetStateAction<IDatabaseUser | null>>, setIsLoading: React.Dispatch<React.SetStateAction<boolean>>) => {
+export const verifyUser = (setUser: React.Dispatch<React.SetStateAction<IDatabaseUser | null>>, setIsLoading: React.Dispatch<React.SetStateAction<boolean>>, setSocket?: React.Dispatch<React.SetStateAction<SocketIOClient.Socket | undefined>>) => {
   setIsLoading(true);
   axios.get('http://localhost:8080/user/', { withCredentials: true })
   .then((res) => {
     setIsLoading(false);
     setUser(res.data as IDatabaseUser);
-    const socket = socketIOClient('localhost:8080', {query: `user=${JSON.stringify(res.data)}`});
+    if(setSocket) {
+      const socket = socketIOClient('localhost:8080', {query: `user=${JSON.stringify(res.data)}`});
+      setSocket(socket);
+    }
   })
   .catch((error) => {
       setIsLoading(false);
@@ -41,9 +44,10 @@ const App: React.FC = () => {
   const [ isLoading, setIsLoading ] = useState(true);
   const [ user, setUser ] = useState<null | IDatabaseUser>(null);
   const [ cookies, setCookie, removeCookie ] = useCookies(['userToken']);
+  const [ socket, setSocket ] = useState<SocketIOClient.Socket | undefined>(undefined)
 
   useEffect(() => {
-    verifyUser(setUser, setIsLoading);
+    verifyUser(setUser, setIsLoading, setSocket);
   }, [])
 
   return (
@@ -71,7 +75,7 @@ const App: React.FC = () => {
                     })}
                     <Button onClick={() => { removeCookie('userToken'); verifyUser(setUser, setIsLoading) }}>logout</Button>
                   </div>
-                : <EmailConfirmation user={user}/>
+                : <EmailConfirmation user={user} />
                 : <FormManager setIsLoading={setIsLoading} setUser={setUser} />
             }
             </SnackbarProvider>

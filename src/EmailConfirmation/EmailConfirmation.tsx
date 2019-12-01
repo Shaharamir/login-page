@@ -7,7 +7,7 @@ import { Typography, Button, CircularProgress } from '@material-ui/core';
 import axios from 'axios';
 
 interface IProps {
-    user: IDatabaseUser
+    user: IDatabaseUser;
 }
 
 const EmailConfirmation: React.FC<IProps> = (props) => {
