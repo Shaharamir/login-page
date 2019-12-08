@@ -10,6 +10,7 @@ import { SnackbarProvider } from 'notistack';
 import EmailConfirmation from './EmailConfirmation/EmailConfirmation';
 import { IDatabaseUser } from './types/types';
 import socketIOClient from "socket.io-client";
+import MainGame from './MainGame/MainGame';
 
 const theme = createMuiTheme({
   palette: {
@@ -74,6 +75,7 @@ const App: React.FC = () => {
                         : <div key={index}>{detail[0]}: {detail[1].toString()}</div>
                     })}
                     <Button onClick={() => { removeCookie('userToken'); verifyUser(setUser, setIsLoading) }}>logout</Button>
+                    <MainGame />
                   </div>
                 : <EmailConfirmation user={user} />
                 : <FormManager setIsLoading={setIsLoading} setUser={setUser} />
