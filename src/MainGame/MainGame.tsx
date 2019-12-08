@@ -32,13 +32,19 @@ const MainGame: React.FC<props> = () => {
             return <Square xIndex={columnsIndex} yIndex={rowsIndex} isChecker={false} />
         }
     }));
+    const rowStyle = css`
+        display: flex;
+        width: fit-content;
+        margin: auto;
+        width: 52vh;
+        height: 6.5vh;
+    `;
     return (
-        <div css={css`display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;`}>
+        <div css={css`width: fit-content;
+        height: fit-content;
+        margin: auto;`}>
             {sqaures.map((x, xIndex) => (
-                <div css={css`display: flex;`}>
+                <div css={rowStyle}>
                     {x.map((checker, yIndex) => checker)}
                 </div>
             ))}

@@ -14,11 +14,11 @@ const Square: React.FC<props> = (props) => {
 
     const { xIndex, yIndex, isChecker, checkerColor  } = props;
     const squareColor = css`
-        background-color: ${xIndex%2 === 0 ? 
+        background-color:${xIndex%2 === 0 ? 
                                 yIndex%2==0 ? 'black' : 'white' : 
                                 yIndex%2==0 ? 'white' : 'black'};
-        width: 5em;
-        height: 5em;
+        width: 100%;
+        height: 100%;
     `;
     const sqaureStyle = css`
         display: flex;
