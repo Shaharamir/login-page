@@ -51,17 +51,7 @@ const App: React.FC = () => {
     verifyUser(setUser, setIsLoading, setSocket);
   }, [])
 
-  useEffect(() => {
-    if(socket) {
-      socket.emit('move', {turn: 'black', board: 'aaa'})
-      socket.on('moveEnd', ({turn, board}: {turn: any, board: any}) => {
-        console.log(`move end: \n ${turn}, ${board}`)
-        setTimeout(() => {
-          socket.emit('move', {turn: turn === 'black' ? 'white' : 'black', board: board})
-        }, 2000)
-      })
-    }
-  }, [socket])
+
 
   return (
     <React.Fragment>
@@ -87,7 +77,7 @@ const App: React.FC = () => {
                         : <div key={index}>{detail[0]}: {detail[1].toString()}</div>
                     })}
                     <Button onClick={() => { removeCookie('userToken'); verifyUser(setUser, setIsLoading) }}>logout</Button>
-                    <MainGame />
+                    <MainGame socket={socket}/>
                   </div>
                 : <EmailConfirmation user={user} />
                 : <FormManager setIsLoading={setIsLoading} setUser={setUser} />
