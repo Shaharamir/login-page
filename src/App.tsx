@@ -51,6 +51,18 @@ const App: React.FC = () => {
     verifyUser(setUser, setIsLoading, setSocket);
   }, [])
 
+  useEffect(() => {
+    if(socket) {
+      socket.emit('move', {turn: 'black', board: 'aaa'})
+      socket.on('moveEnd', ({turn, board}: {turn: any, board: any}) => {
+        console.log(`move end: \n ${turn}, ${board}`)
+        setTimeout(() => {
+          socket.emit('move', {turn: turn === 'black' ? 'white' : 'black', board: board})
+        }, 2000)
+      })
+    }
+  }, [socket])
+
   return (
     <React.Fragment>
       <CookiesProvider>

@@ -4,19 +4,19 @@ import { jsx, css } from '@emotion/core'
 import Checker from '../Checker/Checker';
 
 interface props {
-    xIndex: number;
-    yIndex: number;
+    column: number;
+    row: number;
     isChecker: boolean;
-    checkerColor?: 'white' | 'black'; 
+    checkerColor: 'white' | 'black' | undefined; 
 }
 
 const Square: React.FC<props> = (props) => {
 
-    const { xIndex, yIndex, isChecker, checkerColor  } = props;
+    const { row, column, isChecker, checkerColor  } = props;
     const squareColor = css`
-        background-color:${xIndex%2 === 0 ? 
-                                yIndex%2==0 ? 'black' : 'white' : 
-                                yIndex%2==0 ? 'white' : 'black'};
+        background-color:${row%2 === 0 ? 
+                                column%2===0 ? 'black' : 'white' : 
+                                column%2===0 ? 'white' : 'black'};
         width: 100%;
         height: 100%;
     `;

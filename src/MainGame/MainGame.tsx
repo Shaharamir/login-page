@@ -7,45 +7,43 @@ import { SquareFootSharp } from '@material-ui/icons';
 interface props {
 }
 
+interface IGame {
+    square: {
+        column: number;
+        row: number;
+        isChecker: boolean;
+        checkerColor: 'white' | 'black' | undefined; 
+    }
+}
 
 const MainGame: React.FC<props> = () => {
-    const sqaures = Array.from({length: 8}, (v, columnsIndex) => Array.from({length: 8}, (v, rowsIndex) => {
-        if(columnsIndex === 0) {
-            return <Square xIndex={columnsIndex} yIndex={rowsIndex} isChecker={rowsIndex%2 === 0} checkerColor={'white'} />
+    const game: IGame[][] = Array.from({length: 8}, (v, columnsIndex) => Array.from({length: 8}, (v, rowsIndex) => {
+        const checkerColor = columnsIndex <= 2 ? 'white' : columnsIndex >= 5 ? 'black' : undefined;
+        const evenRow = rowsIndex%2 === 0;
+        const isChecker = columnsIndex%2 === 0 ? evenRow : !evenRow; 
+        return {
+            square: {
+                column: columnsIndex,
+                row: rowsIndex,
+                isChecker: isChecker,
+                checkerColor: checkerColor,
+            }
         }
-        else if(columnsIndex === 1) {
-            return <Square xIndex={columnsIndex} yIndex={rowsIndex} isChecker={rowsIndex%2 === 1} checkerColor={'white'} />
-        }
-        else if(columnsIndex === 2) {
-            return <Square xIndex={columnsIndex} yIndex={rowsIndex} isChecker={rowsIndex%2 === 0} checkerColor={'white'} />
-        }
-        else if(columnsIndex === 5) {
-            return <Square xIndex={columnsIndex} yIndex={rowsIndex} isChecker={rowsIndex%2 === 1} checkerColor={'black'} />
-        }
-        else if(columnsIndex === 6) {
-            return <Square xIndex={columnsIndex} yIndex={rowsIndex} isChecker={rowsIndex%2 === 0} checkerColor={'black'} />
-        }
-        else if(columnsIndex === 7) {
-            return <Square xIndex={columnsIndex} yIndex={rowsIndex} isChecker={rowsIndex%2 === 1} checkerColor={'black'} />
-        }
-        else {
-            return <Square xIndex={columnsIndex} yIndex={rowsIndex} isChecker={false} />
-        }
-    }));
+    }))
     const rowStyle = css`
         display: flex;
         width: fit-content;
         margin: auto;
-        width: 52vh;
-        height: 6.5vh;
+        width: 52vw;
+        height: 6.5vw;
     `;
     return (
         <div css={css`width: fit-content;
         height: fit-content;
         margin: auto;`}>
-            {sqaures.map((x, xIndex) => (
-                <div css={rowStyle}>
-                    {x.map((checker, yIndex) => checker)}
+            {game.map((column, columnIndex) => (
+                <div css={rowStyle} key={columnIndex}>
+                    {column.map((row, rowIndex) => <Square key={rowIndex} column={row.square.column} row={row.square.row} isChecker={row.square.isChecker} checkerColor={row.square.checkerColor} />)}
                 </div>
             ))}
         </div>
