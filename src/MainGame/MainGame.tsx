@@ -2,10 +2,12 @@
 import React, { useEffect, useState } from 'react';
 import { jsx, css } from '@emotion/core'
 import Square from './Square/Square';
+import produce from 'immer';
 
 interface props {
     socket: SocketIOClient.Socket | undefined;
 }
+
 
 interface IGame {
     square: {
@@ -13,22 +15,29 @@ interface IGame {
         row: number;
         isChecker: boolean;
         checkerColor: 'white' | 'black' | undefined;
+        squareColor: 'white' | 'black';
+        shouldHighlight: boolean;
     }
 }
 
-const gameInit: IGame[][] = Array.from({ length: 8 }, (v, columnsIndex) => Array.from({ length: 8 }, (v, rowsIndex) => {
-    const checkerColor = columnsIndex <= 2 ? 'white' : columnsIndex >= 5 ? 'black' : undefined;
-    const evenRow = rowsIndex % 2 === 0;
-    const isChecker = columnsIndex % 2 === 0 ? evenRow : !evenRow;
+const gameInit: IGame[][] = Array.from({ length: 8 }, (v, rowIndex) => Array.from({ length: 8 }, (v, columnIndex) => {
+    const checkerColor = rowIndex <= 2 ? 'white' : (rowIndex >= 5 ? 'black' : undefined);
+    const evenRow = columnIndex % 2 === 0;
+    const rowsAllowed = rowIndex <= 2 && rowIndex >= 5;
+    const isChecker = (checkerColor !== undefined) && (rowIndex % 2 === 0 ? evenRow : !evenRow);
     return {
         square: {
-            column: columnsIndex,
-            row: rowsIndex,
+            row: rowIndex,
+            column: columnIndex,
             isChecker: isChecker,
             checkerColor: isChecker ? checkerColor : undefined,
+            squareColor: columnIndex%2 === 0 ? rowIndex%2===0 ? 'black' : 'white' : rowIndex%2===0 ? 'white' : 'black',
+            shouldHighlight: false
         }
     }
 }))
+
+console.log(gameInit)
 
 const MainGame: React.FC<props> = (props) => {
 
@@ -56,13 +65,86 @@ const MainGame: React.FC<props> = (props) => {
         width: 52vw;
         height: 6.5vw;
     `;
+
+    const removeHighlight = () => {
+        const newGame: IGame[][] = produce(game, draft => {
+            game.map((row, rowIndex) => row.map((column, columnIndex) => draft[rowIndex][columnIndex].square.shouldHighlight = false))
+        });
+        setGame(newGame);
+    }
+    const onSquareClick = (col: number, row: number) => {
+        if(!game[row][col].square.isChecker || game[row][col].square.checkerColor === 'white') return;
+        console.log(`you clicked [col - ${col}, row - ${row}]`);
+        // if king...
+        if (row === 0) {
+            return;
+        }
+        if (col === 0) {
+            console.log(`check right - [${row-1}, ${col+1}]`);
+            if(game[row-2][col+2].square.checkerColor === 'black') return;
+            if(!game[row-2][col+2].square.isChecker) {
+                const newGame: IGame[][] = produce(game, draft => {
+                    draft[row-1][col+1].square.shouldHighlight = true;
+                    draft[row-2][col+2].square.shouldHighlight = true;
+                });
+                setGame(newGame);
+            }
+            else {
+                const newGame: IGame[][] = produce(game, draft => {
+                    draft[row-1][col+1].square.shouldHighlight = true;
+                });
+                setGame(newGame);
+            }
+        } else if (col === 7) {
+            console.log(`check left - [${row-1}, ${col-1}]`);
+            if(game[row-2][col-2].square.checkerColor === 'black') return;
+            if(!game[row-2][col-2].square.isChecker) {
+                const newGame: IGame[][] = produce(game, draft => {
+                    draft[row-1][col-1].square.shouldHighlight = true;
+                    draft[row-2][col-2].square.shouldHighlight = true;
+                });
+                setGame(newGame);
+            }
+            else {
+                const newGame: IGame[][] = produce(game, draft => {
+                    draft[row-1][col-1].square.shouldHighlight = true;
+                });
+                setGame(newGame);
+            }
+        } else {
+            console.log(`check left - [${row-1}, ${col-1}] and check right - [${row-1}, ${col+1}]`);
+            if(col > 1 && col < 6 && row > 1) {
+                const newGame: IGame[][] = produce(game, draft => {
+                    draft[row-2][col-2].square.shouldHighlight = true;
+                    draft[row-1][col+1].square.shouldHighlight = true;
+                    draft[row-1][col-1].square.shouldHighlight = true;
+                    draft[row-2][col+2].square.shouldHighlight = true;
+                });
+                setGame(newGame);
+            }
+            else {
+                const newGame: IGame[][] = produce(game, draft => {
+                    if(col === 7 || col === 6) {
+                        draft[row-2][col-2].square.shouldHighlight = true;
+                    }
+                    if(col === 1 || col === 0) {
+                        draft[row-2][col+2].square.shouldHighlight = true;
+                    }
+                    draft[row-1][col+1].square.shouldHighlight = true;
+                    draft[row-1][col-1].square.shouldHighlight = true;
+                });
+                setGame(newGame);
+            }
+        }
+    };
+
     return (
         <div css={css`width: fit-content;
         height: fit-content;
         margin: auto;`}>
-            {game.map((column, columnIndex) => (
-                <div css={rowStyle} key={columnIndex}>
-                    {column.map((row, rowIndex) => <Square key={rowIndex} column={row.square.column} row={row.square.row} isChecker={row.square.isChecker} checkerColor={row.square.checkerColor} />)}
+            {game.map((row, rowIndex) => (
+                <div css={rowStyle} key={rowIndex}>
+                    {row.map((column, columnIndex) => <Square key={columnIndex} shouldHighlight={column.square.shouldHighlight} squareColor={column.square.squareColor} onSquareOut={() => removeHighlight()} onSquareClick={() => onSquareClick(column.square.column, column.square.row)} column={column.square.column} row={column.square.row} isChecker={column.square.isChecker} checkerColor={column.square.checkerColor} />)}
                 </div>
             ))}
         </div>

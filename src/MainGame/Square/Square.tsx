@@ -7,16 +7,19 @@ interface props {
     column: number;
     row: number;
     isChecker: boolean;
-    checkerColor: 'white' | 'black' | undefined; 
+    checkerColor: 'white' | 'black' | undefined;
+    squareColor: 'white' | 'black';
+    onSquareClick: () => void;
+    onSquareOut: () => void;
+    shouldHighlight: boolean;
 }
 
 const Square: React.FC<props> = (props) => {
 
-    const { row, column, isChecker, checkerColor  } = props;
-    const squareColor = css`
-        background-color:${row%2 === 0 ? 
-                                column%2===0 ? 'black' : 'white' : 
-                                column%2===0 ? 'white' : 'black'};
+    const { row, column, isChecker, checkerColor, onSquareClick, squareColor, shouldHighlight, onSquareOut } = props;
+    const squareColorStyle = css`
+        background-color:${squareColor};
+        ${shouldHighlight && 'background-color: #ff7543;'}
         width: 100%;
         height: 100%;
     `;
@@ -24,10 +27,11 @@ const Square: React.FC<props> = (props) => {
         display: flex;
         justify-content: center;
         align-items: center;
-    `
+    `;
+    
     return (
         <React.Fragment>
-            <div css={[squareColor, sqaureStyle]}>
+            <div css={[squareColorStyle, sqaureStyle]} onMouseLeave={onSquareOut} onMouseEnter={onSquareClick}>
                 {(isChecker && checkerColor) &&
                     <Checker checkerColor={checkerColor}/>}
             </div>
