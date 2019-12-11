@@ -94,7 +94,7 @@ const MainGame: React.FC<props> = (props) => {
         if (row === 0) {
             return;
         }
-
+ 
         if (col === 0) {
             const stepsAvailable = {
                 nextRight: {
