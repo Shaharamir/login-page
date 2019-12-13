@@ -31,7 +31,7 @@ const Square: React.FC<props> = (props) => {
     
     return (
         <React.Fragment>
-            <div css={[squareColorStyle, sqaureStyle]} onMouseLeave={onSquareOut} onMouseEnter={onSquareClick}>
+            <div css={[squareColorStyle, sqaureStyle]} onClick={onSquareClick}>
                 {(isChecker && checkerColor) &&
                     <Checker checkerColor={checkerColor}/>}
             </div>

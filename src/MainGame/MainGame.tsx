@@ -43,17 +43,38 @@ const MainGame: React.FC<props> = (props) => {
 
     const { socket } = props;
 
-    const [game, setGame] = useState<IGame[][]>(gameInit)
+    const [game, setGame] = useState<IGame[][]>(gameInit);
+    const [isAlreadyClicked, setIsAlreadyClicked] = useState(false);
+    const [currentClicked, setCurrentClicked] = useState<{row: number, col: number} | undefined>(undefined);
+    const getAvailableSteps = () => {
+        let a = [];
+        for(let i = 0; i < 8; i++) {
+            for(let j = 0; j < 8; j++) {
+                if(game[i][j].square.shouldHighlight) {
+                    a.push({
+                        row: i,
+                        col: j
+                    })
+                }
+            }
+        }
+        return a;
+    }
+    interface IAvailable {
+        row: number;
+        col: number;
+    } 
+    const [availableSteps, setAvailableSteps] = useState<IAvailable[]>([]);
+    useEffect(() => {
+        setAvailableSteps(getAvailableSteps())
+    }, [game])
+    console.log(availableSteps);
 
     useEffect(() => {
         if (socket) {
-            socket.emit('move', { turn: 'black', board: JSON.stringify(game) })
             socket.on('moveEnd', ({ turn, board }: { turn: 'black' | 'white', board: IGame[][] }) => {
                 console.log(`move end: \n ${turn}, ${board}`)
                 setGame(board);
-                setTimeout(() => {
-                    socket.emit('move', { turn: turn === 'black' ? 'white' : 'black', board: JSON.stringify(game) })
-                }, 2000)
             })
         }
     }, [socket])
@@ -71,6 +92,8 @@ const MainGame: React.FC<props> = (props) => {
             game.map((row, rowIndex) => row.map((column, columnIndex) => draft[rowIndex][columnIndex].square.shouldHighlight = false))
         });
         setGame(newGame);
+        setIsAlreadyClicked(false);
+        setCurrentClicked(undefined);
     }
 
     const checkIfNextStepIsTakenByYourself = (nextRow: number, nextCol: number): boolean => {
@@ -88,7 +111,33 @@ const MainGame: React.FC<props> = (props) => {
 
 
     const onSquareClick = (col: number, row: number) => {
-        if (!game[row][col].square.isChecker || game[row][col].square.checkerColor === 'white') return;
+        if(isAlreadyClicked) {
+            if(currentClicked && currentClicked.row === row && currentClicked.col === col) {
+                removeHighlight();
+                return;
+            }
+            else if (availableSteps.filter(x => x.row === row && x.col === col).length > 0) {
+                if(socket && currentClicked) {
+                    const current = {
+                        row: currentClicked.row,
+                        col: currentClicked.col,
+                    }
+                    const target = {
+                        row: row, 
+                        col: col,
+                    }
+                    // turn: turn === 'black' ? 'white' : 'black'
+                    setIsAlreadyClicked(false);
+                    setCurrentClicked(undefined);
+                    socket.emit('move', {turn: 'black',current ,target,  board: JSON.stringify(game) })
+                }
+                return;
+            }
+            else {
+                return;
+            }
+        }
+        else if (!game[row][col].square.isChecker || game[row][col].square.checkerColor === 'white') return;
         console.log(`you clicked [col - ${col}, row - ${row}]`);
         // if king...
         if (row === 0) {
@@ -123,6 +172,8 @@ const MainGame: React.FC<props> = (props) => {
                 }
             })
             setGame(newGame);
+            setIsAlreadyClicked(true);
+            setCurrentClicked({row: row, col: col});
         } else if (col === 7) {
             const stepsAvailable = {
                 nextLeft: {
@@ -151,6 +202,8 @@ const MainGame: React.FC<props> = (props) => {
                 }
             })
             setGame(newGame);
+            setIsAlreadyClicked(true);
+            setCurrentClicked({row: row, col: col});
         }
         else if (col === 6) {
             const stepsAvailable = {
@@ -186,6 +239,8 @@ const MainGame: React.FC<props> = (props) => {
                 draft[stepsAvailable.nextRight.row][stepsAvailable.nextRight.col].square.shouldHighlight = true;
             })
             setGame(newGame);
+            setIsAlreadyClicked(true);
+            setCurrentClicked({row: row, col: col});
         }
         else if (col === 1) {
             const stepsAvailable = {
@@ -221,6 +276,8 @@ const MainGame: React.FC<props> = (props) => {
                 draft[stepsAvailable.nextLeft.row][stepsAvailable.nextLeft.col].square.shouldHighlight = true;
             })
             setGame(newGame);
+            setIsAlreadyClicked(true);
+            setCurrentClicked({row: row, col: col});
         }
         else {
             const stepsAvailable = {
@@ -266,6 +323,8 @@ const MainGame: React.FC<props> = (props) => {
                 }
             });
             setGame(newGame);
+            setIsAlreadyClicked(true);
+            setCurrentClicked({row: row, col: col});
         }
     };
 
