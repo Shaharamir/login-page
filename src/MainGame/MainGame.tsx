@@ -96,17 +96,24 @@ const MainGame: React.FC<props> = (props) => {
         setCurrentClicked(undefined);
     }
 
-    const checkIfNextStepIsTakenByYourself = (nextRow: number, nextCol: number): boolean => {
-        return game[nextRow][nextCol].square.checkerColor === 'black';
+    interface ICoords {
+        row: number;
+        col: number;
     }
 
-    const checkIfNextStepIsTakenByEnemy = (nextRow: number, nextCol: number): boolean => {
-        return game[nextRow][nextCol].square.checkerColor === 'white';
+    const isStepTaken = (coords: ICoords | null) => {
+        if(coords) {
+            return game[coords.row][coords.col].square.isChecker;
+        }
+        else {
+            return false
+        }
     }
 
-    const checkifNextNextStepIsTaken = (nextNextRow: number, nextNextCol: number) => {
-        return game[nextNextRow][nextNextCol].square.checkerColor === 'white'
-            || game[nextNextRow][nextNextCol].square.checkerColor === 'black';
+    const playerColor = (coords: ICoords) => {
+        if(game[coords.row][coords.col].square.checkerColor) {
+            return game[coords.row][coords.col].square.checkerColor;
+        };
     }
 
 
@@ -143,8 +150,43 @@ const MainGame: React.FC<props> = (props) => {
         if (row === 0) {
             return;
         }
- 
-        if (col === 0) {
+
+
+        const checkStepsAvailable = (next: ICoords, nextNext: ICoords | null, game: IGame[][]): IGame[][] => {
+            const isNextStepTaken = isStepTaken(next);
+            const isNextNextStepTaken = isStepTaken(nextNext);
+            const nextPlayerColor = playerColor(next);
+            let isSucceed = false;
+            const newGame: IGame[][] = produce(game, draft => {
+                if(isNextStepTaken) {
+                    if(nextPlayerColor === 'black') {
+                        return;
+                    }
+                    else if(nextPlayerColor === 'white') {
+                        if(isNextNextStepTaken) {
+                            return;
+                        }
+                        else {
+                            if(nextNext) {
+                                draft[nextNext.row][nextNext.col].square.shouldHighlight = true;
+                                isSucceed = true;
+                            }
+                        }
+                    }
+                }
+                else {
+                    draft[next.row][next.col].square.shouldHighlight = true;
+                    isSucceed = true;
+                }
+            })
+            if(isSucceed) {
+                setIsAlreadyClicked(true);
+                setCurrentClicked({row: row, col: col});
+            }
+            return newGame
+        }
+
+        if(col === 0) {
             const stepsAvailable = {
                 nextRight: {
                     row: row - 1,
@@ -155,26 +197,10 @@ const MainGame: React.FC<props> = (props) => {
                     col: col + 2
                 }
             }
-            //next step available - {row-1}, {col+1};
-            // next next step available - {row-2}, {col+2};
-            console.log(`check right - [${row - 1}, ${col + 1}]`);
-            const newGame: IGame[][] = produce(game, draft => {
-                const isNextStepRightTakenByYouself = checkIfNextStepIsTakenByYourself(stepsAvailable.nextRight.row, stepsAvailable.nextRight.col);
-                const isNextStepRightTakenByEnemy = checkIfNextStepIsTakenByEnemy(stepsAvailable.nextRight.row, stepsAvailable.nextRight.col);
-                const isnextNextStepTaken = row <= 1 ? false : checkifNextNextStepIsTaken(stepsAvailable.nextNextRight.row, stepsAvailable.nextNextRight.col);
-                if (isNextStepRightTakenByYouself) return;
-                if (isNextStepRightTakenByEnemy && isnextNextStepTaken) return;
-                if (isNextStepRightTakenByEnemy && !isnextNextStepTaken) {
-                    draft[stepsAvailable.nextNextRight.row][stepsAvailable.nextNextRight.col].square.shouldHighlight = true;
-                }
-                else {
-                    draft[stepsAvailable.nextRight.row][stepsAvailable.nextRight.col].square.shouldHighlight = true;
-                }
-            })
-            setGame(newGame);
-            setIsAlreadyClicked(true);
-            setCurrentClicked({row: row, col: col});
-        } else if (col === 7) {
+            const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, game);
+            setGame(updatedBoard)
+        }
+        else if (col === 7) {
             const stepsAvailable = {
                 nextLeft: {
                     row: row - 1,
@@ -185,25 +211,27 @@ const MainGame: React.FC<props> = (props) => {
                     col: col - 2
                 }
             }
-            //next step available - {row-1}, {col-1};
-            // next next step available - {row-2}, {col-2};
-            console.log(`check left - [${row - 1}, ${col - 1}]`);
-            const newGame: IGame[][] = produce(game, draft => {
-                const isNextStepLeftTakenByYouself = checkIfNextStepIsTakenByYourself(stepsAvailable.nextLeft.row, stepsAvailable.nextLeft.col);
-                const isNextStepLeftTakenByEnemy = checkIfNextStepIsTakenByEnemy(stepsAvailable.nextLeft.row, stepsAvailable.nextLeft.col);
-                const isnextNextLeftStepTaken = row <= 1 ? false : checkifNextNextStepIsTaken(stepsAvailable.nextNextLeft.row, stepsAvailable.nextNextLeft.col);
-                if (isNextStepLeftTakenByYouself) return;
-                if (isNextStepLeftTakenByEnemy && isnextNextLeftStepTaken) return;
-                if (isNextStepLeftTakenByEnemy && !isnextNextLeftStepTaken) {
-                    draft[stepsAvailable.nextNextLeft.row][stepsAvailable.nextNextLeft.col].square.shouldHighlight = true;
+            const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, game);
+            setGame(updatedBoard);
+        }
+        else if (col === 1) {
+            const stepsAvailable = {
+                nextRight: {
+                    row: row - 1,
+                    col: col + 1
+                },
+                nextNextRight: {
+                    row: row - 2,
+                    col: col + 2
+                },
+                nextLeft: {
+                    row: row - 1,
+                    col: col - 1
                 }
-                else {
-                    draft[stepsAvailable.nextLeft.row][stepsAvailable.nextLeft.col].square.shouldHighlight = true;
-                }
-            })
-            setGame(newGame);
-            setIsAlreadyClicked(true);
-            setCurrentClicked({row: row, col: col});
+            }
+            const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, game);
+            const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextLeft, null, updatedBoard);
+            setGame(updatedBoardLatest);
         }
         else if (col === 6) {
             const stepsAvailable = {
@@ -211,73 +239,18 @@ const MainGame: React.FC<props> = (props) => {
                     row: row - 1,
                     col: col - 1
                 },
-                nextRight: {
-                    row: row - 1,
-                    col: col + 1
-                },
                 nextNextLeft: {
                     row: row - 2,
                     col: col - 2
-                }
-            }
-            const newGame: IGame[][] = produce(game, draft => {
-                const isNextStepLeftTakenByYouself = checkIfNextStepIsTakenByYourself(stepsAvailable.nextLeft.row, stepsAvailable.nextLeft.col);
-                const isNextStepLeftTakenByEnemy = checkIfNextStepIsTakenByEnemy(stepsAvailable.nextLeft.row, stepsAvailable.nextLeft.col);
-                const isnextNextLeftStepTaken = row <= 1 ? false : checkifNextNextStepIsTaken(stepsAvailable.nextNextLeft.row, stepsAvailable.nextNextLeft.col);
-                if (isNextStepLeftTakenByYouself) return;
-                if (isNextStepLeftTakenByEnemy && isnextNextLeftStepTaken) return;
-                if (isNextStepLeftTakenByEnemy && !isnextNextLeftStepTaken) {
-                    draft[stepsAvailable.nextNextLeft.row][stepsAvailable.nextNextLeft.col].square.shouldHighlight = true;
-                }
-                else {
-                    draft[stepsAvailable.nextLeft.row][stepsAvailable.nextLeft.col].square.shouldHighlight = true;
-                }
-                const isNextStepRightTakenByYouself = checkIfNextStepIsTakenByYourself(stepsAvailable.nextRight.row, stepsAvailable.nextRight.col);
-                const isNextStepRightTakenByEnemy = checkIfNextStepIsTakenByEnemy(stepsAvailable.nextRight.row, stepsAvailable.nextRight.col);
-                if (isNextStepRightTakenByYouself) return;
-                if (isNextStepRightTakenByEnemy) return;
-                draft[stepsAvailable.nextRight.row][stepsAvailable.nextRight.col].square.shouldHighlight = true;
-            })
-            setGame(newGame);
-            setIsAlreadyClicked(true);
-            setCurrentClicked({row: row, col: col});
-        }
-        else if (col === 1) {
-            const stepsAvailable = {
-                nextLeft: {
-                    row: row - 1,
-                    col: col - 1
                 },
                 nextRight: {
                     row: row - 1,
                     col: col + 1
-                },
-                nextNextRight: {
-                    row: row - 2,
-                    col: col + 2
                 }
             }
-            const newGame: IGame[][] = produce(game, draft => {
-                const isNextStepRightTakenByYouself = checkIfNextStepIsTakenByYourself(stepsAvailable.nextRight.row, stepsAvailable.nextRight.col);
-                const isNextStepRightTakenByEnemy = checkIfNextStepIsTakenByEnemy(stepsAvailable.nextRight.row, stepsAvailable.nextRight.col);
-                const isnextNextStepTaken = row <= 1 ? false : checkifNextNextStepIsTaken(stepsAvailable.nextNextRight.row, stepsAvailable.nextNextRight.col);
-                if (isNextStepRightTakenByYouself) return;
-                if (isNextStepRightTakenByEnemy && isnextNextStepTaken) return;
-                if (isNextStepRightTakenByEnemy && !isnextNextStepTaken) {
-                    draft[stepsAvailable.nextNextRight.row][stepsAvailable.nextNextRight.col].square.shouldHighlight = true;
-                }
-                else {
-                    draft[stepsAvailable.nextRight.row][stepsAvailable.nextRight.col].square.shouldHighlight = true;
-                }
-                const isNextStepLeftTakenByYouself = checkIfNextStepIsTakenByYourself(stepsAvailable.nextLeft.row, stepsAvailable.nextLeft.col);
-                const isNextStepLeftTakenByEnemy = checkIfNextStepIsTakenByEnemy(stepsAvailable.nextLeft.row, stepsAvailable.nextLeft.col);
-                if (isNextStepLeftTakenByYouself) return;
-                if (isNextStepLeftTakenByEnemy) return;
-                draft[stepsAvailable.nextLeft.row][stepsAvailable.nextLeft.col].square.shouldHighlight = true;
-            })
-            setGame(newGame);
-            setIsAlreadyClicked(true);
-            setCurrentClicked({row: row, col: col});
+            const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, game);
+            const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextRight, null, updatedBoard);
+            setGame(updatedBoardLatest);
         }
         else {
             const stepsAvailable = {
@@ -298,33 +271,9 @@ const MainGame: React.FC<props> = (props) => {
                     col: col + 2
                 }
             }
-            const newGame: IGame[][] = produce(game, draft => {
-                const isNextStepRightTakenByYouself = checkIfNextStepIsTakenByYourself(stepsAvailable.nextRight.row, stepsAvailable.nextRight.col);
-                const isNextStepRightTakenByEnemy = checkIfNextStepIsTakenByEnemy(stepsAvailable.nextRight.row, stepsAvailable.nextRight.col);
-                const isnextNextStepTaken = row <= 1 ? false : checkifNextNextStepIsTaken(stepsAvailable.nextNextRight.row, stepsAvailable.nextNextRight.col);
-                if (isNextStepRightTakenByYouself) return;
-                if (isNextStepRightTakenByEnemy && isnextNextStepTaken) return;
-                if (isNextStepRightTakenByEnemy && !isnextNextStepTaken) {
-                    draft[stepsAvailable.nextNextRight.row][stepsAvailable.nextNextRight.col].square.shouldHighlight = true;
-                }
-                else {
-                    draft[stepsAvailable.nextRight.row][stepsAvailable.nextRight.col].square.shouldHighlight = true;
-                }
-                const isNextStepLeftTakenByYouself = checkIfNextStepIsTakenByYourself(stepsAvailable.nextLeft.row, stepsAvailable.nextLeft.col);
-                const isNextStepLeftTakenByEnemy = checkIfNextStepIsTakenByEnemy(stepsAvailable.nextLeft.row, stepsAvailable.nextLeft.col);
-                const isnextNextLeftStepTaken = row <= 1 ? false : checkifNextNextStepIsTaken(stepsAvailable.nextNextLeft.row, stepsAvailable.nextNextLeft.col);
-                if (isNextStepLeftTakenByYouself) return;
-                if (isNextStepLeftTakenByEnemy && isnextNextLeftStepTaken) return;
-                if (isNextStepLeftTakenByEnemy && !isnextNextLeftStepTaken) {
-                    draft[stepsAvailable.nextNextLeft.row][stepsAvailable.nextNextLeft.col].square.shouldHighlight = true;
-                }
-                else {
-                    draft[stepsAvailable.nextLeft.row][stepsAvailable.nextLeft.col].square.shouldHighlight = true;
-                }
-            });
-            setGame(newGame);
-            setIsAlreadyClicked(true);
-            setCurrentClicked({row: row, col: col});
+            const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, game);
+            const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, updatedBoard);
+            setGame(updatedBoardLatest);
         }
     };
 
