@@ -45,7 +45,7 @@ const MainGame: React.FC<props> = (props) => {
 
     const [game, setGame] = useState<IGame[][]>(gameInit);
     const [isAlreadyClicked, setIsAlreadyClicked] = useState(false);
-    const [currentClicked, setCurrentClicked] = useState<{row: number, col: number} | undefined>(undefined);
+    const [currentClicked, setCurrentClicked] = useState<ICoords | undefined>(undefined);
     const getAvailableSteps = () => {
         let a = [];
         for(let i = 0; i < 8; i++) {
@@ -60,15 +60,14 @@ const MainGame: React.FC<props> = (props) => {
         }
         return a;
     }
-    interface IAvailable {
-        row: number;
-        col: number;
-    } 
-    const [availableSteps, setAvailableSteps] = useState<IAvailable[]>([]);
+    const [availableSteps, setAvailableSteps] = useState<ICoords[]>([]);
     useEffect(() => {
         setAvailableSteps(getAvailableSteps())
     }, [game])
-    console.log(availableSteps);
+
+    const checkIfClicked = (row: number, col: number) => {
+        return currentClicked ? currentClicked.row === row && currentClicked.col === col : false
+    }
 
     useEffect(() => {
         if (socket) {
@@ -283,7 +282,7 @@ const MainGame: React.FC<props> = (props) => {
         margin: auto;`}>
             {game.map((row, rowIndex) => (
                 <div css={rowStyle} key={rowIndex}>
-                    {row.map((column, columnIndex) => <Square key={columnIndex} shouldHighlight={column.square.shouldHighlight} squareColor={column.square.squareColor} onSquareOut={() => removeHighlight()} onSquareClick={() => onSquareClick(column.square.column, column.square.row)} column={column.square.column} row={column.square.row} isChecker={column.square.isChecker} checkerColor={column.square.checkerColor} />)}
+                    {row.map((column, columnIndex) => <Square key={columnIndex} isChecked={checkIfClicked(rowIndex, columnIndex)} shouldHighlight={column.square.shouldHighlight} squareColor={column.square.squareColor} onSquareClick={() => onSquareClick(column.square.column, column.square.row)} isChecker={column.square.isChecker} checkerColor={column.square.checkerColor} />)}
                 </div>
             ))}
         </div>

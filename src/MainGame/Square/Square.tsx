@@ -4,19 +4,17 @@ import { jsx, css } from '@emotion/core'
 import Checker from '../Checker/Checker';
 
 interface props {
-    column: number;
-    row: number;
     isChecker: boolean;
     checkerColor: 'white' | 'black' | undefined;
     squareColor: 'white' | 'black';
     onSquareClick: () => void;
-    onSquareOut: () => void;
     shouldHighlight: boolean;
+    isChecked: boolean;
 }
 
 const Square: React.FC<props> = (props) => {
 
-    const { row, column, isChecker, checkerColor, onSquareClick, squareColor, shouldHighlight, onSquareOut } = props;
+    const { isChecker, checkerColor, onSquareClick, squareColor, shouldHighlight, isChecked } = props;
     const squareColorStyle = css`
         background-color:${squareColor};
         ${shouldHighlight && 'background-color: #ff7543;'}
@@ -33,7 +31,7 @@ const Square: React.FC<props> = (props) => {
         <React.Fragment>
             <div css={[squareColorStyle, sqaureStyle]} onClick={onSquareClick}>
                 {(isChecker && checkerColor) &&
-                    <Checker checkerColor={checkerColor}/>}
+                    <Checker checkerColor={checkerColor} isChecked={isChecked}/>}
             </div>
         </React.Fragment>
     )
