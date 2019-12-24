@@ -21,6 +21,7 @@ interface IGame {
 }
 
 const gameInit: IGame[][] = Array.from({ length: 8 }, (v, rowIndex) => Array.from({ length: 8 }, (v, columnIndex) => {
+    console.log('rendered again');
     const checkerColor = rowIndex <= 2 ? 'white' : (rowIndex >= 5 ? 'black' : undefined);
     const evenRow = columnIndex % 2 === 0;
     const rowsAllowed = rowIndex <= 2 && rowIndex >= 5;
@@ -35,31 +36,56 @@ const gameInit: IGame[][] = Array.from({ length: 8 }, (v, rowIndex) => Array.fro
             shouldHighlight: false
         }
     }
-}))
-
-console.log(gameInit)
+}));
 
 const MainGame: React.FC<props> = (props) => {
-
-    const { socket } = props;
-
-    const [game, setGame] = useState<IGame[][]>(gameInit);
-    const [isAlreadyClicked, setIsAlreadyClicked] = useState(false);
-    const [currentClicked, setCurrentClicked] = useState<ICoords | undefined>(undefined);
     const getAvailableSteps = () => {
-        let a = [];
+        let coords = [];
         for(let i = 0; i < 8; i++) {
             for(let j = 0; j < 8; j++) {
                 if(game[i][j].square.shouldHighlight) {
-                    a.push({
+                    coords.push({
                         row: i,
                         col: j
                     })
                 }
             }
         }
-        return a;
+        return coords;
     }
+    const moveChecker = (currentGame: IGame[][], current: {row: number, col: number}, target: {row: number, col: number}) => {
+        printBoard(currentGame);
+        console.log(`From: ${current.row},${current.col} To: ${target.row},${target.col}`);
+        console.log(`------------------------------`);
+        const newGame: IGame[][] = produce(currentGame, draft => {
+            //if eat
+            if(Math.abs(current.row - target.row) === 2) {
+                const eatedRow = (current.row+target.row)/2
+                const eatedCol = (current.col+target.col)/2
+                draft[eatedRow][eatedCol].square.isChecker = false;
+                draft[eatedRow][eatedCol].square.checkerColor = undefined;
+            }
+            draft.forEach((row, rowIndex) => 
+                row.forEach((column, columnIndex) => 
+                    draft[rowIndex][columnIndex].square.shouldHighlight = false
+                )
+            );
+            const currentChecker = draft[current.row][current.col].square;
+            draft[current.row][current.col].square.isChecker = false;
+            draft[target.row][target.col].square.isChecker = true;
+            draft[target.row][target.col].square.checkerColor = currentChecker.checkerColor;
+            draft[current.row][current.col].square.checkerColor = undefined;
+            return draft;
+        });
+        return newGame;
+    }
+ 
+    const { socket } = props;
+    const [isGameStarted, setIsGameStarted] = useState(false);
+    const [turn, setTurn] = useState(false);;
+    const [game, setGame] = useState<IGame[][]>(gameInit);
+    const [isAlreadyClicked, setIsAlreadyClicked] = useState(false);
+    const [currentClicked, setCurrentClicked] = useState<ICoords | undefined>(undefined);
     const [availableSteps, setAvailableSteps] = useState<ICoords[]>([]);
     useEffect(() => {
         setAvailableSteps(getAvailableSteps())
@@ -70,13 +96,20 @@ const MainGame: React.FC<props> = (props) => {
     }
 
     useEffect(() => {
-        if (socket) {
-            socket.on('moveEnd', ({ turn, board }: { turn: 'black' | 'white', board: IGame[][] }) => {
-                console.log(`move end: \n ${turn}, ${board}`)
-                setGame(board);
-            })
+        if(socket) {
+            socket.off('moveEnd');
+            socket.on('moveEnd', ({ current, target }: { current: ICoords, target: ICoords}) => {
+                setGame(moveChecker(game, current, target));
+                setTurn(true);
+            });
+
+            socket.off('gameStart');
+            socket.on('gameStart', (turn: string) => {
+                setIsGameStarted(true);
+                setTurn(turn === socket.id);
+            });
         }
-    }, [socket])
+    }, [socket, game]);
 
     const rowStyle = css`
         display: flex;
@@ -88,7 +121,7 @@ const MainGame: React.FC<props> = (props) => {
 
     const removeHighlight = () => {
         const newGame: IGame[][] = produce(game, draft => {
-            game.map((row, rowIndex) => row.map((column, columnIndex) => draft[rowIndex][columnIndex].square.shouldHighlight = false))
+            draft.map((row, rowIndex) => row.map((column, columnIndex) => draft[rowIndex][columnIndex].square.shouldHighlight = false))
         });
         setGame(newGame);
         setIsAlreadyClicked(false);
@@ -118,6 +151,7 @@ const MainGame: React.FC<props> = (props) => {
 
     const onSquareClick = (col: number, row: number) => {
         if(isAlreadyClicked) {
+            //if clicked himslef
             if(currentClicked && currentClicked.row === row && currentClicked.col === col) {
                 removeHighlight();
                 return;
@@ -135,7 +169,9 @@ const MainGame: React.FC<props> = (props) => {
                     // turn: turn === 'black' ? 'white' : 'black'
                     setIsAlreadyClicked(false);
                     setCurrentClicked(undefined);
-                    socket.emit('move', {turn: 'black',current ,target,  board: JSON.stringify(game) })
+                    setGame(moveChecker(game, current, target));
+                    setTurn(false);
+                    socket.emit('move', { current ,target });
                 }
                 return;
             }
@@ -251,7 +287,45 @@ const MainGame: React.FC<props> = (props) => {
             const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextRight, null, updatedBoard);
             setGame(updatedBoardLatest);
         }
+        else if (row === 1 && col === 0) {
+            const stepsAvailable = {
+                nextRight: {
+                    row: row - 1,
+                    col: col + 1
+                },
+            }
+            const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, null, game);
+            setGame(updatedBoard);
+
+        }
+        else if (row === 1 && col === 7) {
+            const stepsAvailable = {
+                nextLeft: {
+                    row: row - 1,
+                    col: col - 1
+                },
+            }
+            const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, null, game);
+            setGame(updatedBoard);
+
+        }
+        else if(row === 1) {
+            const stepsAvailable = {
+                nextRight: {
+                    row: row - 1,
+                    col: col + 1
+                },
+                nextLeft: {
+                    row: row - 1,
+                    col: col - 1
+                },
+            }
+            const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, null, game);
+            const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextRight, null, updatedBoard);
+            setGame(updatedBoardLatest);
+        }
         else {
+            if(row === 0) return;
             const stepsAvailable = {
                 nextLeft: {
                     row: row - 1,
@@ -277,15 +351,48 @@ const MainGame: React.FC<props> = (props) => {
     };
 
     return (
+        <React.Fragment>
         <div css={css`width: fit-content;
         height: fit-content;
         margin: auto;`}>
-            {game.map((row, rowIndex) => (
-                <div css={rowStyle} key={rowIndex}>
-                    {row.map((column, columnIndex) => <Square key={columnIndex} isChecked={checkIfClicked(rowIndex, columnIndex)} shouldHighlight={column.square.shouldHighlight} squareColor={column.square.squareColor} onSquareClick={() => onSquareClick(column.square.column, column.square.row)} isChecker={column.square.isChecker} checkerColor={column.square.checkerColor} />)}
-                </div>
-            ))}
+            {socket && isGameStarted ? 
+                turn ? 
+                    game.map((row, rowIndex) => (
+                        <div css={rowStyle} key={rowIndex}>
+                            {row.map((column, columnIndex) => <Square key={columnIndex} isDisabled={false} isChecked={checkIfClicked(rowIndex, columnIndex)} shouldHighlight={column.square.shouldHighlight} squareColor={column.square.squareColor} onSquareClick={() => onSquareClick(column.square.column, column.square.row)} isChecker={column.square.isChecker} checkerColor={column.square.checkerColor} />)}
+                        </div>
+                    ))
+                    :
+                    <React.Fragment>
+                        {game.map((row, rowIndex) => (
+                            <div css={rowStyle} key={rowIndex}>
+                                {row.map((column, columnIndex) => <Square key={columnIndex} isDisabled={true} isChecked={checkIfClicked(rowIndex, columnIndex)} shouldHighlight={column.square.shouldHighlight} squareColor={column.square.squareColor} onSquareClick={() => onSquareClick(column.square.column, column.square.row)} isChecker={column.square.isChecker} checkerColor={column.square.checkerColor} />)}
+                            </div>
+                        ))}
+                        <div>Waiting for opponent to play.</div>
+                    </React.Fragment>
+                :
+            <div>Waiting for opponent to join...</div>}
         </div>
+        </React.Fragment>
     )
 }
+
+const printSymbol = {
+    white: '🍪',
+    black: '🍦',
+    default: '🍫',
+}
+const printBoard = (board: IGame[][]) => {
+    board.map(row => {
+        const printRow = row.map(({ square: { checkerColor } }) => {
+            const symbol = printSymbol[checkerColor!] || printSymbol.default;
+            return ` ${symbol} `
+        });
+        console.log(...printRow);
+    });
+}
+
+//@ts-ignore;
+MainGame.whyDidYouRender = true
 export default MainGame;

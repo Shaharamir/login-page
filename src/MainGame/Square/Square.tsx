@@ -10,16 +10,19 @@ interface props {
     onSquareClick: () => void;
     shouldHighlight: boolean;
     isChecked: boolean;
+    isDisabled: boolean;
 }
 
 const Square: React.FC<props> = (props) => {
 
-    const { isChecker, checkerColor, onSquareClick, squareColor, shouldHighlight, isChecked } = props;
+    const { isChecker, checkerColor, onSquareClick, squareColor, shouldHighlight, isChecked, isDisabled } = props;
     const squareColorStyle = css`
         background-color:${squareColor};
         ${shouldHighlight && 'background-color: #ff7543;'}
         width: 100%;
         height: 100%;
+        ${isDisabled && `pointer-events: none;
+                         filter: opacity(0.5);`}
     `;
     const sqaureStyle = css`
         display: flex;

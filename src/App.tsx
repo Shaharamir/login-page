@@ -88,5 +88,6 @@ const App: React.FC = () => {
     </React.Fragment>
   );
 }
-
+//@ts-ignore
+App.whyDidYouRender = true
 export default App;
