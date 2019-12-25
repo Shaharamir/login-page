@@ -17,6 +17,7 @@ interface IGame {
         checkerColor: 'white' | 'black' | undefined;
         squareColor: 'white' | 'black';
         shouldHighlight: boolean;
+        isKing: boolean;
     }
 }
 
@@ -33,7 +34,8 @@ const gameInit: IGame[][] = Array.from({ length: 8 }, (v, rowIndex) => Array.fro
             isChecker: isChecker,
             checkerColor: isChecker ? checkerColor : undefined,
             squareColor: columnIndex % 2 === 0 ? rowIndex % 2 === 0 ? 'black' : 'white' : rowIndex % 2 === 0 ? 'white' : 'black',
-            shouldHighlight: false
+            shouldHighlight: false,
+            isKing: false,
         }
     }
 }));
@@ -74,7 +76,13 @@ const MainGame: React.FC<props> = (props) => {
             draft[current.row][current.col].square.isChecker = false;
             draft[target.row][target.col].square.isChecker = true;
             draft[target.row][target.col].square.checkerColor = currentChecker.checkerColor;
-            draft[current.row][current.col].square.checkerColor = undefined;
+            if(target.row === 7 && currentChecker.checkerColor === 'white') {
+                draft[target.row][target.col].square.isKing = true;
+              }
+              else if(target.row === 0 && currentChecker.checkerColor === 'black') {
+                draft[target.row][target.col].square.isKing = true;
+              }
+              draft[current.row][current.col].square.checkerColor = undefined;
             return draft;
         });
         return newGame;
@@ -249,7 +257,7 @@ const MainGame: React.FC<props> = (props) => {
             const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, game);
             setGame(updatedBoard);
         }
-        else if (col === 1) {
+        else if (col === 1 && row !== 1) {
             const stepsAvailable = {
                 nextRight: {
                     row: row - 1,
@@ -357,16 +365,19 @@ const MainGame: React.FC<props> = (props) => {
         margin: auto;`}>
             {socket && isGameStarted ? 
                 turn ? 
-                    game.map((row, rowIndex) => (
-                        <div css={rowStyle} key={rowIndex}>
-                            {row.map((column, columnIndex) => <Square key={columnIndex} isDisabled={false} isChecked={checkIfClicked(rowIndex, columnIndex)} shouldHighlight={column.square.shouldHighlight} squareColor={column.square.squareColor} onSquareClick={() => onSquareClick(column.square.column, column.square.row)} isChecker={column.square.isChecker} checkerColor={column.square.checkerColor} />)}
-                        </div>
-                    ))
+                    <React.Fragment>
+                        {game.map((row, rowIndex) => (
+                            <div css={rowStyle} key={rowIndex}>
+                                {row.map((column, columnIndex) => <Square key={columnIndex} isKing={column.square.isKing} isDisabled={false} isChecked={checkIfClicked(rowIndex, columnIndex)} shouldHighlight={column.square.shouldHighlight} squareColor={column.square.squareColor} onSquareClick={() => onSquareClick(column.square.column, column.square.row)} isChecker={column.square.isChecker} checkerColor={column.square.checkerColor} />)}
+                            </div>
+                        ))}
+                        <div>Your turn.</div>
+                    </React.Fragment>
                     :
                     <React.Fragment>
                         {game.map((row, rowIndex) => (
                             <div css={rowStyle} key={rowIndex}>
-                                {row.map((column, columnIndex) => <Square key={columnIndex} isDisabled={true} isChecked={checkIfClicked(rowIndex, columnIndex)} shouldHighlight={column.square.shouldHighlight} squareColor={column.square.squareColor} onSquareClick={() => onSquareClick(column.square.column, column.square.row)} isChecker={column.square.isChecker} checkerColor={column.square.checkerColor} />)}
+                                {row.map((column, columnIndex) => <Square key={columnIndex} isDisabled={true} isKing={column.square.isKing} isChecked={checkIfClicked(rowIndex, columnIndex)} shouldHighlight={column.square.shouldHighlight} squareColor={column.square.squareColor} onSquareClick={() => onSquareClick(column.square.column, column.square.row)} isChecker={column.square.isChecker} checkerColor={column.square.checkerColor} />)}
                             </div>
                         ))}
                         <div>Waiting for opponent to play.</div>
