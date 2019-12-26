@@ -66,6 +66,7 @@ const MainGame: React.FC<props> = (props) => {
                 const eatedCol = (current.col+target.col)/2
                 draft[eatedRow][eatedCol].square.isChecker = false;
                 draft[eatedRow][eatedCol].square.checkerColor = undefined;
+                draft[eatedRow][eatedCol].square.isKing = false;
             }
             draft.forEach((row, rowIndex) => 
                 row.forEach((column, columnIndex) => 
@@ -76,13 +77,14 @@ const MainGame: React.FC<props> = (props) => {
             draft[current.row][current.col].square.isChecker = false;
             draft[target.row][target.col].square.isChecker = true;
             draft[target.row][target.col].square.checkerColor = currentChecker.checkerColor;
-            if(target.row === 7 && currentChecker.checkerColor === 'white') {
+            if(target.row === 7 && currentChecker.checkerColor === 'white' || currentChecker.isKing) {
                 draft[target.row][target.col].square.isKing = true;
-              }
-              else if(target.row === 0 && currentChecker.checkerColor === 'black') {
-                draft[target.row][target.col].square.isKing = true;
-              }
-              draft[current.row][current.col].square.checkerColor = undefined;
+            }
+            else if(target.row === 0 && currentChecker.checkerColor === 'black' || currentChecker.isKing) {
+            draft[target.row][target.col].square.isKing = true;
+            }
+            draft[current.row][current.col].square.checkerColor = undefined;
+            draft[current.row][current.col].square.isKing = false;
             return draft;
         });
         return newGame;
@@ -189,11 +191,6 @@ const MainGame: React.FC<props> = (props) => {
         }
         else if (!game[row][col].square.isChecker || game[row][col].square.checkerColor === 'white') return;
         console.log(`you clicked [col - ${col}, row - ${row}]`);
-        // if king...
-        if (row === 0) {
-            return;
-        }
-
 
         const checkStepsAvailable = (next: ICoords, nextNext: ICoords | null, game: IGame[][]): IGame[][] => {
             const isNextStepTaken = isStepTaken(next);
@@ -229,132 +226,517 @@ const MainGame: React.FC<props> = (props) => {
             return newGame
         }
 
-        if(col === 0) {
-            const stepsAvailable = {
-                nextRight: {
-                    row: row - 1,
-                    col: col + 1
-                },
-                nextNextRight: {
-                    row: row - 2,
-                    col: col + 2
+        // if king...
+        if(game[row][col].square.isKing) {
+            if(row === 0 && col === 0) {
+                const stepsAvailable = {
+                    previousRight: {
+                        row: row + 1,
+                        col: col + 1
+                    },
+                    previousPreviousRight: {
+                        row: row + 2,
+                        col: col + 2
+                    }
                 }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.previousRight, stepsAvailable.previousPreviousRight, game);
+                setGame(updatedBoard)
             }
-            const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, game);
-            setGame(updatedBoard)
-        }
-        else if (col === 7) {
-            const stepsAvailable = {
-                nextLeft: {
-                    row: row - 1,
-                    col: col - 1
-                },
-                nextNextLeft: {
-                    row: row - 2,
-                    col: col - 2
+            else if(row === 0 && col === 6) {
+                const stepsAvailable = {
+                    previousRight: {
+                        row: row + 1,
+                        col: col + 1
+                    },
+                    previousLeft: {
+                        row: row + 1,
+                        col: col - 1
+                    },
+                    previousPreviousLeft: {
+                        row: row + 2,
+                        col: col - 2
+                    },
                 }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.previousRight, null, game);
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.previousLeft, stepsAvailable.previousPreviousLeft, updatedBoard);
+                setGame(updatedBoardLatest); 
             }
-            const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, game);
-            setGame(updatedBoard);
-        }
-        else if (col === 1 && row !== 1) {
-            const stepsAvailable = {
-                nextRight: {
-                    row: row - 1,
-                    col: col + 1
-                },
-                nextNextRight: {
-                    row: row - 2,
-                    col: col + 2
-                },
-                nextLeft: {
-                    row: row - 1,
-                    col: col - 1
+            else if(row === 0) {
+                const stepsAvailable = {
+                    previousRight: {
+                        row: row + 1,
+                        col: col + 1
+                    },
+                    previousPreviousRight: {
+                        row: row + 2,
+                        col: col + 2
+                    },
+                    previousLeft: {
+                        row: row + 1,
+                        col: col - 1
+                    },
+                    previousPreviousLeft: {
+                        row: row + 2,
+                        col: col - 2
+                    },
                 }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.previousRight, stepsAvailable.previousPreviousRight, game);
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.previousLeft, stepsAvailable.previousPreviousLeft, updatedBoard);
+                setGame(updatedBoardLatest); 
             }
-            const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, game);
-            const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextLeft, null, updatedBoard);
-            setGame(updatedBoardLatest);
-        }
-        else if (col === 6) {
-            const stepsAvailable = {
-                nextLeft: {
-                    row: row - 1,
-                    col: col - 1
-                },
-                nextNextLeft: {
-                    row: row - 2,
-                    col: col - 2
-                },
-                nextRight: {
-                    row: row - 1,
-                    col: col + 1
+            else if(row === 7 && col === 7) {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    nextNextLeft: {
+                        row: row - 2,
+                        col: col - 2
+                    },
                 }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, game);
+                setGame(updatedBoard)
             }
-            const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, game);
-            const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextRight, null, updatedBoard);
-            setGame(updatedBoardLatest);
-        }
-        else if (row === 1 && col === 0) {
-            const stepsAvailable = {
-                nextRight: {
-                    row: row - 1,
-                    col: col + 1
-                },
+            else if(row === 7 && col === 1) {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    nextNextRight: {
+                        row: row - 2,
+                        col: col + 2
+                    },
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, null, game);
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, updatedBoard);
+                setGame(updatedBoardLatest); 
             }
-            const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, null, game);
-            setGame(updatedBoard);
-
-        }
-        else if (row === 1 && col === 7) {
-            const stepsAvailable = {
-                nextLeft: {
-                    row: row - 1,
-                    col: col - 1
-                },
+            else if(row === 1 && col === 1) {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    previousLeft: {
+                        row: row + 1,
+                        col: col - 1
+                    },
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    previousRight: {
+                        row: row + 1,
+                        col: col + 1
+                    },
+                    previousPreviousRight: {
+                        row: row + 2,
+                        col: col + 2
+                    },
+                }
+                const nextLeft = checkStepsAvailable(stepsAvailable.nextLeft, null, game)
+                const nextRight = checkStepsAvailable(stepsAvailable.nextRight, null, nextLeft)
+                const previousLeft = checkStepsAvailable(stepsAvailable.previousLeft, null, nextRight)
+                const previousRight = checkStepsAvailable(stepsAvailable.previousRight, stepsAvailable.previousPreviousRight, previousLeft)
+                setGame(previousRight);
             }
-            const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, null, game);
-            setGame(updatedBoard);
-
-        }
-        else if(row === 1) {
-            const stepsAvailable = {
-                nextRight: {
-                    row: row - 1,
-                    col: col + 1
-                },
-                nextLeft: {
-                    row: row - 1,
-                    col: col - 1
-                },
+            else if(row === 1) {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    previousLeft: {
+                        row: row + 1,
+                        col: col - 1
+                    },
+                    previousPreviousLeft: {
+                        row: row + 2,
+                        col: col - 2
+                    },
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    previousRight: {
+                        row: row + 1,
+                        col: col + 1
+                    },
+                    previousPreviousRight: {
+                        row: row + 2,
+                        col: col + 2
+                    },
+                }
+                const nextLeft = checkStepsAvailable(stepsAvailable.nextLeft, null, game)
+                const nextRight = checkStepsAvailable(stepsAvailable.nextRight, null, nextLeft)
+                const previousLeft = checkStepsAvailable(stepsAvailable.previousLeft, stepsAvailable.previousPreviousLeft, nextRight)
+                const previousRight = checkStepsAvailable(stepsAvailable.previousRight, stepsAvailable.previousPreviousRight, previousLeft)
+                setGame(previousRight);
             }
-            const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, null, game);
-            const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextRight, null, updatedBoard);
-            setGame(updatedBoardLatest);
+            else if(row === 7) {
+                const stepsAvailable = {
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    nextNextRight: {
+                        row: row - 2,
+                        col: col + 2
+                    },
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    nextNextLeft: {
+                        row: row - 2,
+                        col: col - 2
+                    },
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, game);
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, updatedBoard);
+                setGame(updatedBoardLatest);
+            }
+            else if(col === 0 && row === 6) {
+                const stepsAvailable = {
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    nextNextRight: {
+                        row: row - 2,
+                        col: col + 2
+                    },
+                    previousRight: {
+                        row: row + 1,
+                        col: col + 1
+                    },
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, game)
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.previousRight, null, updatedBoard)
+                setGame(updatedBoardLatest);
+            }
+            else if(col === 6 && row === 6) {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    nextNextLeft: {
+                        row: row - 2,
+                        col: col - 2
+                    },
+                    previousLeft: {
+                        row: row + 1,
+                        col: col - 1
+                    },
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    previousRight: {
+                        row: row + 1,
+                        col: col + 1
+                    },
+                }
+                const nextLeft = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, game)
+                const nextRight = checkStepsAvailable(stepsAvailable.nextRight, null, nextLeft)
+                const previousLeft = checkStepsAvailable(stepsAvailable.previousLeft, null, nextRight)
+                const previousRight = checkStepsAvailable(stepsAvailable.previousRight, null, previousLeft)
+                setGame(previousRight);
+            }
+            else if (col === 6) {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    nextNextLeft: {
+                        row: row - 2,
+                        col: col - 2
+                    },
+                    previousLeft: {
+                        row: row + 1,
+                        col: col - 1
+                    },
+                    previousPreviousLeft: {
+                        row: row + 2,
+                        col: col - 2
+                    },
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    previousRight: {
+                        row: row + 1,
+                        col: col + 1
+                    },
+                }
+                const nextLeft = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, game)
+                const nextRight = checkStepsAvailable(stepsAvailable.nextRight, null, nextLeft)
+                const previousLeft = checkStepsAvailable(stepsAvailable.previousLeft, stepsAvailable.previousPreviousLeft, nextRight)
+                const previousRight = checkStepsAvailable(stepsAvailable.previousRight, null, previousLeft)
+                setGame(previousRight);
+            }
+            else if(col === 1) {
+                const stepsAvailable = {
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    nextNextRight: {
+                        row: row - 2,
+                        col: col + 2
+                    },
+                    previousRight: {
+                        row: row + 1,
+                        col: col + 1
+                    },
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.previousRight, null, game);
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, updatedBoard);
+                setGame(updatedBoardLatest); 
+            }
+            else if(col === 0) {
+                const stepsAvailable = {
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    nextNextRight: {
+                        row: row - 2,
+                        col: col + 2
+                    },
+                    previousRight: {
+                        row: row + 1,
+                        col: col + 1
+                    },
+                    previousPreviousRight: {
+                        row: row + 2,
+                        col: col + 2
+                    },
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.previousRight, stepsAvailable.previousPreviousRight, game);
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, updatedBoard);
+                setGame(updatedBoardLatest);
+            }
+            else if(col === 7 && row === 1) {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    previousLeft: {
+                        row: row + 1,
+                        col: col - 1
+                    },
+                    previousPreviousLeft: {
+                        row: row + 2,
+                        col: col - 2
+                    },
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, null, game);
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.previousLeft, stepsAvailable.previousPreviousLeft, updatedBoard);
+                setGame(updatedBoardLatest);
+            }
+            else if(col === 7) {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    nextNextLeft: {
+                        row: row - 2,
+                        col: col - 2
+                    },
+                    previousLeft: {
+                        row: row + 1,
+                        col: col - 1
+                    },
+                    previousPreviousLeft: {
+                        row: row + 2,
+                        col: col - 2
+                    },
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.previousLeft, stepsAvailable.previousPreviousLeft, game);
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, updatedBoard);
+                setGame(updatedBoardLatest);
+            }
+            else {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    nextNextLeft: {
+                        row: row - 2,
+                        col: col - 2
+                    },
+                    previousLeft: {
+                        row: row + 1,
+                        col: col - 1
+                    },
+                    previousPreviousLeft: {
+                        row: row + 2,
+                        col: col - 2
+                    },
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    nextNextRight: {
+                        row: row - 2,
+                        col: col + 2
+                    },
+                    previousRight: {
+                        row: row + 1,
+                        col: col + 1
+                    },
+                    previousPreviousRight: {
+                        row: row + 2,
+                        col: col + 2
+                    },
+                }
+                const nextLeft = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, game)
+                const nextRight = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, nextLeft)
+                const previousLeft = checkStepsAvailable(stepsAvailable.previousLeft, stepsAvailable.previousPreviousLeft, nextRight)
+                const previousRight = checkStepsAvailable(stepsAvailable.previousRight, stepsAvailable.previousPreviousRight, previousLeft)
+                setGame(previousRight);
+            }
         }
         else {
-            if(row === 0) return;
-            const stepsAvailable = {
-                nextLeft: {
-                    row: row - 1,
-                    col: col - 1
-                },
-                nextRight: {
-                    row: row - 1,
-                    col: col + 1
-                },
-                nextNextLeft: {
-                    row: row - 2,
-                    col: col - 2
-                },
-                nextNextRight: {
-                    row: row - 2,
-                    col: col + 2
+            if(col === 0) {
+                const stepsAvailable = {
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    nextNextRight: {
+                        row: row - 2,
+                        col: col + 2
+                    }
                 }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, game);
+                setGame(updatedBoard)
             }
-            const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, game);
-            const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, updatedBoard);
-            setGame(updatedBoardLatest);
+            else if (col === 7) {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    nextNextLeft: {
+                        row: row - 2,
+                        col: col - 2
+                    }
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, game);
+                setGame(updatedBoard);
+            }
+            else if (col === 1 && row !== 1) {
+                const stepsAvailable = {
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    nextNextRight: {
+                        row: row - 2,
+                        col: col + 2
+                    },
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    }
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, game);
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextLeft, null, updatedBoard);
+                setGame(updatedBoardLatest);
+            }
+            else if (col === 6) {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    nextNextLeft: {
+                        row: row - 2,
+                        col: col - 2
+                    },
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    }
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, game);
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextRight, null, updatedBoard);
+                setGame(updatedBoardLatest);
+            }
+            else if (row === 1 && col === 0) {
+                const stepsAvailable = {
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, null, game);
+                setGame(updatedBoard);
+    
+            }
+            else if (row === 1 && col === 7) {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, null, game);
+                setGame(updatedBoard);
+    
+            }
+            else if(row === 1) {
+                const stepsAvailable = {
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, null, game);
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextRight, null, updatedBoard);
+                setGame(updatedBoardLatest);
+            }
+            else {
+                if(row === 0) return;
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    nextRight: {
+                        row: row - 1,
+                        col: col + 1
+                    },
+                    nextNextLeft: {
+                        row: row - 2,
+                        col: col - 2
+                    },
+                    nextNextRight: {
+                        row: row - 2,
+                        col: col + 2
+                    }
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, game);
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextLeft, stepsAvailable.nextNextLeft, updatedBoard);
+                setGame(updatedBoardLatest);
+            }
         }
     };
 
