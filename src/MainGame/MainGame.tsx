@@ -346,6 +346,25 @@ const MainGame: React.FC<props> = (props) => {
                 const previousRight = checkStepsAvailable(stepsAvailable.previousRight, stepsAvailable.previousPreviousRight, previousLeft)
                 setGame(previousRight);
             }
+            else if(col === 7 && row === 1) {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                    previousLeft: {
+                        row: row + 1,
+                        col: col - 1
+                    },
+                    previousPreviousLeft: {
+                        row: row + 2,
+                        col: col - 2
+                    },
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, null, game);
+                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.previousLeft, stepsAvailable.previousPreviousLeft, updatedBoard);
+                setGame(updatedBoardLatest);
+            }
             else if(row === 1) {
                 const stepsAvailable = {
                     nextLeft: {
@@ -497,10 +516,24 @@ const MainGame: React.FC<props> = (props) => {
                         row: row + 1,
                         col: col + 1
                     },
+                    previousPreviousRight: {
+                        row: row + 2,
+                        col: col + 2
+                    },
+                    previousLeft: {
+                        row: row + 1,
+                        col: col - 1
+                    },
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
                 }
-                const updatedBoard = checkStepsAvailable(stepsAvailable.previousRight, null, game);
-                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, updatedBoard);
-                setGame(updatedBoardLatest); 
+                const nextLeft = checkStepsAvailable(stepsAvailable.nextLeft, null, game)
+                const nextRight = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, nextLeft)
+                const previousLeft = checkStepsAvailable(stepsAvailable.previousLeft, null, nextRight)
+                const previousRight = checkStepsAvailable(stepsAvailable.previousRight, stepsAvailable.previousPreviousRight, previousLeft)
+                setGame(previousRight);
             }
             else if(col === 0) {
                 const stepsAvailable = {
@@ -523,25 +556,6 @@ const MainGame: React.FC<props> = (props) => {
                 }
                 const updatedBoard = checkStepsAvailable(stepsAvailable.previousRight, stepsAvailable.previousPreviousRight, game);
                 const updatedBoardLatest = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, updatedBoard);
-                setGame(updatedBoardLatest);
-            }
-            else if(col === 7 && row === 1) {
-                const stepsAvailable = {
-                    nextLeft: {
-                        row: row - 1,
-                        col: col - 1
-                    },
-                    previousLeft: {
-                        row: row + 1,
-                        col: col - 1
-                    },
-                    previousPreviousLeft: {
-                        row: row + 2,
-                        col: col - 2
-                    },
-                }
-                const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, null, game);
-                const updatedBoardLatest = checkStepsAvailable(stepsAvailable.previousLeft, stepsAvailable.previousPreviousLeft, updatedBoard);
                 setGame(updatedBoardLatest);
             }
             else if(col === 7) {
@@ -624,6 +638,17 @@ const MainGame: React.FC<props> = (props) => {
                 const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, stepsAvailable.nextNextRight, game);
                 setGame(updatedBoard)
             }
+            else if (row === 1 && col === 7) {
+                const stepsAvailable = {
+                    nextLeft: {
+                        row: row - 1,
+                        col: col - 1
+                    },
+                }
+                const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, null, game);
+                setGame(updatedBoard);
+    
+            }
             else if (col === 7) {
                 const stepsAvailable = {
                     nextLeft: {
@@ -684,17 +709,6 @@ const MainGame: React.FC<props> = (props) => {
                     },
                 }
                 const updatedBoard = checkStepsAvailable(stepsAvailable.nextRight, null, game);
-                setGame(updatedBoard);
-    
-            }
-            else if (row === 1 && col === 7) {
-                const stepsAvailable = {
-                    nextLeft: {
-                        row: row - 1,
-                        col: col - 1
-                    },
-                }
-                const updatedBoard = checkStepsAvailable(stepsAvailable.nextLeft, null, game);
                 setGame(updatedBoard);
     
             }
